@@ -11,6 +11,7 @@ initializeApp({
   credential: cert({
     projectId: FIREBASE_PROJECT_ID,
     clientEmail: FIREBASE_CLIENT_EMAIL,
-    privateKey: FIREBASE_PRIVATE_KEY.replace(/\n/g, "\n"),
+    // Igual que src/lib/firebase/admin.ts: tolera comillas alrededor y \n escritos.
+    privateKey: FIREBASE_PRIVATE_KEY.trim().replace(/^["']|["']$/g, "").replace(/\\n/g, "\n"),
   }),
 });
