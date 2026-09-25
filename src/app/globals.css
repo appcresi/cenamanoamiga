@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Colores del logo de Mano Amiga: cambiarlos acá se refleja en toda la app. */
+:root {
+  --background: #f7f8fb;
+  --foreground: #1c2430;
+  --superficie: #ffffff;
+  --borde: #dde2ec;
+  --primario: #202b54;
+  --primario-claro: #eaf0f9;
+  --secundario: #5681c2;
+  --acento: #e96c09;
+  --peligro: #b42318;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-superficie: var(--superficie);
+  --color-borde: var(--borde);
+  --color-primario: var(--primario);
+  --color-primario-claro: var(--primario-claro);
+  --color-secundario: var(--secundario);
+  --color-acento: var(--acento);
+  --color-peligro: var(--peligro);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

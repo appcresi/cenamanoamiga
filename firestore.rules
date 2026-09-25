@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Solo los organizadores (cuentas de Google cuyo email tiene un documento en
+// `organizadores/{email}`) pueden leer y escribir. Los invitados NO acceden a
+// Firestore directamente: la app consulta su mesa desde el servidor con Firebase Admin.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function emailUsuario() {
+      return request.auth.token.email.lower();
+    }
+
+    function esOrganizador() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/organizadores/$(emailUsuario()));
+    }
+
+    // Cada organizador puede leer su propio registro. Se crean con
+    // `npm run organizadores -- agregar <email>` o desde la consola de Firebase.
+    match /organizadores/{email} {
+      allow read: if request.auth != null && emailUsuario() == email;
+      allow write: if false;
+    }
+
+    match /{coleccion}/{id} {
+      allow read, write: if coleccion in ['invitados', 'grupos', 'mesas', 'evento']
+        && esOrganizador();
+    }
+  }
+}
