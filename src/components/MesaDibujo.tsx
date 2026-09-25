@@ -19,7 +19,7 @@ const COLOR_SILLA: Record<EstadoSilla, string> = {
   reservada: "border border-secundario bg-secundario/25",
   excedida: "bg-peligro",
   neutra: "border border-primario/25 bg-superficie",
-  destacada: "bg-acento ring-4 ring-acento/35 animate-pulse",
+  destacada: "scale-150 bg-acento ring-4 ring-acento/35 animate-pulse",
 };
 
 const COLOR_MESA: Record<EstadoMesa, string> = {

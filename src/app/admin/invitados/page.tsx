@@ -2,6 +2,7 @@
 
 import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useMemo, useState, type FormEvent } from "react";
+import { BotonImprimir, EncabezadoImpresion, PieImpresion } from "@/components/admin/Impresion";
 import { ModalCompartir } from "@/components/admin/ModalCompartir";
 import { AreaTexto, Boton, Campo, EstadoCarga, Modal, Selector, Titulo } from "@/components/admin/ui";
 import { db } from "@/lib/firebase/cliente";
@@ -24,9 +25,9 @@ const VACIO: Borrador = {
 };
 
 const COLOR_ASISTENCIA: Record<Asistencia, string> = {
-  pendiente: "bg-amber-100 text-amber-800",
-  confirmado: "bg-green-100 text-green-800",
-  no_asiste: "bg-gray-200 text-gray-700",
+  pendiente: "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300",
+  confirmado: "bg-green-100 text-green-800 dark:bg-green-400/15 dark:text-green-300",
+  no_asiste: "bg-gray-200 text-gray-700 dark:bg-gray-400/15 dark:text-gray-300",
 };
 
 export default function PaginaInvitados() {
@@ -65,6 +66,15 @@ export default function PaginaInvitados() {
       .sort((a, b) => a.apellido.localeCompare(b.apellido) || a.nombre.localeCompare(b.nombre));
   }, [invitados.datos, busqueda, filtroGrupo, filtroAsistencia, grupoPorId]);
 
+  const detalleImpresion = [
+    `${visibles.length} invitados`,
+    filtroGrupo && (filtroGrupo === "ninguno" ? "Sin grupo" : grupoPorId.get(filtroGrupo)?.nombre),
+    filtroAsistencia && ETIQUETAS_ASISTENCIA[filtroAsistencia as Asistencia],
+    busqueda.trim() && `Búsqueda: "${busqueda.trim()}"`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   async function eliminar(i: Invitado) {
     if (!confirm(`¿Eliminar a ${nombreCompleto(i)}? Su link dejará de funcionar.`)) return;
     await deleteDoc(doc(db(), "invitados", i.id));
@@ -72,11 +82,19 @@ export default function PaginaInvitados() {
 
   return (
     <>
-      <Titulo acciones={<Boton onClick={() => setEditando("nuevo")}>+ Nuevo invitado</Boton>}>
+      <Titulo
+        acciones={
+          <>
+            <BotonImprimir>Imprimir listado</BotonImprimir>
+            <Boton onClick={() => setEditando("nuevo")}>+ Nuevo invitado</Boton>
+          </>
+        }
+      >
         Invitados ({invitados.datos.length})
       </Titulo>
+      <EncabezadoImpresion titulo="Listado de invitados" detalle={detalleImpresion} />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid gap-3 sm:grid-cols-3 print:hidden">
         <Campo etiqueta="Buscar" placeholder="Nombre, DNI u organización" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
         <Selector etiqueta="Organización / grupo" value={filtroGrupo} onChange={(e) => setFiltroGrupo(e.target.value)}>
           <option value="">Todos</option>
@@ -100,8 +118,8 @@ export default function PaginaInvitados() {
       <EstadoCarga cargando={invitados.cargando} error={invitados.error} />
 
       {!invitados.cargando && (
-        <div className="overflow-x-auto rounded-xl border border-borde bg-superficie">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-borde bg-superficie print:overflow-visible">
+          <table className="w-full text-left text-sm print:text-xs [&_td]:print:py-1.5 [&_th]:print:py-1.5">
             <thead className="border-b border-borde bg-background text-foreground/60">
               <tr>
                 <th className="px-4 py-3 font-medium">Nombre</th>
@@ -109,12 +127,13 @@ export default function PaginaInvitados() {
                 <th className="px-4 py-3 font-medium">Organización / grupo</th>
                 <th className="px-4 py-3 font-medium">Mesa</th>
                 <th className="px-4 py-3 font-medium">Asistencia</th>
-                <th className="px-4 py-3" />
+                <th className="px-4 py-3 print:hidden" />
+                <th className="hidden px-4 py-3 font-medium print:table-cell">Llegó</th>
               </tr>
             </thead>
             <tbody>
               {visibles.map((i) => (
-                <tr key={i.id} className="border-b border-borde last:border-0">
+                <tr key={i.id} className="border-b border-borde last:border-0 print:break-inside-avoid">
                   <td className="px-4 py-3 font-medium">{nombreCompleto(i)}</td>
                   <td className="px-4 py-3 text-foreground/70">{i.dni || "—"}</td>
                   <td className="px-4 py-3 text-foreground/70">{grupoPorId.get(i.grupoId ?? "")?.nombre ?? "—"}</td>
@@ -124,10 +143,13 @@ export default function PaginaInvitados() {
                       {ETIQUETAS_ASISTENCIA[i.asistencia]}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                  <td className="whitespace-nowrap px-4 py-3 text-right print:hidden">
                     <Boton variante="texto" onClick={() => setCompartiendo(i)}>Link/QR</Boton>
                     <Boton variante="texto" onClick={() => setEditando(i)}>Editar</Boton>
                     <Boton variante="texto" className="text-peligro" onClick={() => eliminar(i)}>Eliminar</Boton>
+                  </td>
+                  <td className="hidden px-4 py-3 print:table-cell">
+                    <span className="inline-block size-4 rounded border border-foreground/40" />
                   </td>
                 </tr>
               ))}
@@ -142,6 +164,8 @@ export default function PaginaInvitados() {
           </table>
         </div>
       )}
+
+      <PieImpresion />
 
       {editando && (
         <FormularioInvitado

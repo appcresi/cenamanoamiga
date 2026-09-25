@@ -9,15 +9,15 @@ Hecho con Next.js, TypeScript, Tailwind CSS y Firebase (Authentication + Firesto
 **Organizadores** (`/ingresar` → `/admin`): ingresan con su cuenta de Google (solo los emails habilitados) y cargan:
 
 - **Invitados**: nombre, DNI, contacto, empresa/grupo, mesa y asistencia. Cada uno tiene un link y un QR propios.
-- **Empresas y grupos**: para empresas que compran una mesa y envían empleados (no hace falta cargar a cada uno). El grupo tiene su propio link/QR que muestra sus mesas.
-- **Mesas**: número, nombre opcional y capacidad, con la ocupación de cada una.
+- **Organizaciones y grupos**: empresas, fundaciones, asociaciones, bancos u otras instituciones que compran una mesa y envían personas (no hace falta cargar a cada una), o familias. Cada grupo tiene su propio link/QR que muestra sus mesas.
+- **Mesas**: plano del salón con mesas que se arrastran, un circulito por lugar y la ocupación de cada una.
 - **Evento**: fecha, lugar, vestimenta e información que ven los invitados.
 
-**Invitados** (sin cuenta): ven su mesa y los datos del evento de tres formas:
+**Invitados** (sin cuenta): ven su mesa, el plano del salón con su mesa (y su lugar) resaltados y los datos del evento:
 
 1. Abriendo su link personal `/invitacion/<código>`.
 2. Escaneando su QR (lleva al mismo link).
-3. Buscando su DNI en la página de inicio.
+3. Buscando en la página de inicio por su DNI o por el nombre de su organización (los grupos particulares no aparecen en esta búsqueda).
 
 Un invitado sin mesa propia ve la mesa de su grupo.
 
@@ -25,7 +25,8 @@ Un invitado sin mesa propia ve la mesa de su grupo.
 
 - Los invitados nunca acceden a la base de datos directamente. El servidor busca su invitación con Firebase Admin, así nadie puede listar a todos los invitados.
 - Las reglas de Firestore (`firestore.rules`) solo dejan leer y escribir a las cuentas de Google cuyo email figura en la colección `organizadores`.
-- Tené en cuenta que cualquiera que conozca el DNI de un invitado puede ver en qué mesa está.
+- Tené en cuenta que cualquiera que conozca el DNI de un invitado puede ver en qué mesa está, y que cualquiera puede buscar una organización por nombre y ver sus mesas. La vista por búsqueda de organización no muestra nombres de invitados; el link/QR del grupo sí.
+- El plano público no muestra qué lugares están ocupados ni por quién.
 
 ## Puesta en marcha
 
@@ -83,7 +84,8 @@ Los links y QR usan el dominio desde donde los genera el organizador. Generalos 
 
 ```
 src/app/page.tsx                    Inicio: datos del evento + búsqueda por DNI
-src/app/invitacion/[token]/         Página del invitado o grupo
+src/app/invitacion/[token]/         Página del invitado o grupo (link/QR)
+src/app/organizacion/[id]/          Página de una organización (desde la búsqueda)
 src/app/ingresar/                   Login de organizadores
 src/app/admin/                      Panel: resumen, invitados, grupos, mesas, evento
 src/lib/consultas.ts                Consultas del servidor (Firebase Admin)

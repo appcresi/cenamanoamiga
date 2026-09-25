@@ -48,7 +48,7 @@ export default function PaginaEvento() {
         <Campo etiqueta="Dirección" value={evento.direccion} onChange={(e) => cambiar("direccion", e.target.value)} />
         <AreaTexto etiqueta="Información adicional" rows={5} className="sm:col-span-2" placeholder="Programa, estacionamiento, contacto, etc." value={evento.informacion} onChange={(e) => cambiar("informacion", e.target.value)} />
         <div className="flex items-center justify-end gap-3 sm:col-span-2">
-          {estado === "guardado" && <span className="text-sm text-green-700">Guardado ✓</span>}
+          {estado === "guardado" && <span className="text-sm text-green-700 dark:text-green-400">Guardado ✓</span>}
           {estado === "error" && <span className="text-sm text-peligro">No se pudo guardar</span>}
           <Boton type="submit" disabled={estado === "guardando"}>
             {estado === "guardando" ? "Guardando…" : "Guardar"}

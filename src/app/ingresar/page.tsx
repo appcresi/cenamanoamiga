@@ -1,53 +1,15 @@
-"use client";
+import type { Metadata } from "next";
+import { connection } from "next/server";
+import { PaginaInicio } from "@/components/PaginaInicio";
+import { obtenerEvento } from "@/lib/consultas";
 
-import { FirebaseError } from "firebase/app";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Boton } from "@/components/admin/ui";
-import { Encabezado } from "@/components/Encabezado";
-import { auth } from "@/lib/firebase/cliente";
+export const metadata: Metadata = {
+  title: "Ingreso de organizadores · Cena de Beneficio",
+  robots: { index: false, follow: false },
+};
 
-const CANCELADO = ["auth/popup-closed-by-user", "auth/cancelled-popup-request"];
-
-export default function Ingresar() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-
-  async function ingresar() {
-    setEnviando(true);
-    setError(null);
-    try {
-      const proveedor = new GoogleAuthProvider();
-      proveedor.setCustomParameters({ prompt: "select_account" });
-      await signInWithPopup(auth(), proveedor);
-      router.replace("/admin");
-    } catch (e) {
-      const codigo = e instanceof FirebaseError ? e.code : "";
-      if (!CANCELADO.includes(codigo)) {
-        setError(
-          codigo === "auth/popup-blocked"
-            ? "El navegador bloqueó la ventana de Google. Permití las ventanas emergentes y probá de nuevo."
-            : "No se pudo ingresar con Google. Probá de nuevo.",
-        );
-      }
-      setEnviando(false);
-    }
-  }
-
-  return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-12">
-      <Encabezado titulo="Organizadores" />
-      <div className="flex flex-col gap-4 rounded-2xl border border-borde bg-superficie p-6 text-center">
-        <p className="text-sm text-foreground/70">
-          Ingresá con la cuenta de Google que te habilitaron como organizador.
-        </p>
-        <Boton onClick={ingresar} disabled={enviando} className="py-3">
-          {enviando ? "Ingresando…" : "Ingresar con Google"}
-        </Boton>
-        {error && <p className="text-sm text-peligro">{error}</p>}
-      </div>
-    </main>
-  );
+/** Mismo inicio, con la solapa de organizadores abierta (el panel redirige acá sin sesión). */
+export default async function Ingresar() {
+  await connection();
+  return <PaginaInicio evento={await obtenerEvento()} solapa="organizadores" />;
 }

@@ -9,7 +9,7 @@ export default function OrganizacionNoEncontrada() {
         No encontramos esa organización. Volvé a buscarla por su nombre o buscá tu mesa con tu
         DNI.
       </p>
-      <Link href="/" className="rounded-lg bg-primario px-5 py-3 font-medium text-white">
+      <Link href="/" className="rounded-lg bg-primario-fondo px-5 py-3 font-medium text-white">
         Volver a buscar
       </Link>
     </main>

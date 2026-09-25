@@ -268,3 +268,124 @@ function DetalleMesa({
     </section>
   );
 }
+
+/**
+ * Versión para imprimir: el plano completo en la primera hoja y, después, quién se
+ * sienta en cada mesa (numerado en el mismo orden que las sillas del plano).
+ */
+export function ImpresionUbicaciones({
+  mesas,
+  invitados,
+  grupos,
+}: {
+  mesas: Mesa[];
+  invitados: Invitado[];
+  grupos: Grupo[];
+}) {
+  const grilla = posicionesEnGrilla(mesas);
+  const sentadosPorMesa = new Map<string, Invitado[]>();
+  for (const i of invitados) if (i.mesaId) sentadosPorMesa.set(i.mesaId, [...(sentadosPorMesa.get(i.mesaId) ?? []), i]);
+  for (const [id, lista] of sentadosPorMesa) sentadosPorMesa.set(id, ordenarSentados(lista));
+
+  // Invitados que heredan la mesa de su organización (no tienen mesa propia).
+  const sinMesaPropia = (g: Grupo) => ordenarSentados(invitados.filter((i) => i.grupoId === g.id && !i.mesaId));
+  const gruposUnaMesa = new Map<string, Grupo[]>();
+  for (const g of grupos) if (g.mesaIds.length === 1) gruposUnaMesa.set(g.mesaIds[0], [...(gruposUnaMesa.get(g.mesaIds[0]) ?? []), g]);
+  const gruposVariasMesas = grupos.filter((g) => g.mesaIds.length > 1 && sinMesaPropia(g).length);
+  const reservasPorMesa = new Map<string, Grupo[]>();
+  for (const g of grupos) for (const id of g.mesaIds) reservasPorMesa.set(id, [...(reservasPorMesa.get(id) ?? []), g]);
+
+  return (
+    <div className="hidden print:block">
+      <div className="break-after-page">
+        <div className={`${CLASE_PLANO} rounded-xl border border-borde`}>
+          <FondoPlano />
+          {mesas.map((m) => {
+            const p = posicionDe(m, grilla);
+            return (
+              <div
+                key={m.id}
+                style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                className="absolute aspect-square w-[12%] -translate-x-1/2 -translate-y-1/2"
+              >
+                <MesaAdmin
+                  mesa={m}
+                  sentados={sentadosPorMesa.get(m.id) ?? []}
+                  reservada={reservasPorMesa.has(m.id)}
+                  activa={false}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-foreground/60">
+          Cada circulito es un lugar. Los números de lugar de las listas siguen el sentido de las
+          agujas del reloj, empezando desde arriba.
+        </p>
+      </div>
+
+      <div className="columns-2 gap-6 text-xs">
+        {mesas.map((m) => {
+          const sentados = sentadosPorMesa.get(m.id) ?? [];
+          const reservas = reservasPorMesa.get(m.id) ?? [];
+          const heredados = (gruposUnaMesa.get(m.id) ?? []).flatMap((g) => sinMesaPropia(g).map((i) => ({ i, g })));
+          return (
+            <section key={m.id} className="mb-4 break-inside-avoid border-b border-borde pb-2">
+              <h2 className="flex justify-between text-sm font-semibold text-primario">
+                <span>{nombreMesa(m)}</span>
+                <span className="font-normal text-foreground/60">
+                  {sentados.length}/{m.capacidad}
+                  {heredados.length > 0 && ` · +${heredados.length} sin lugar fijo`}
+                </span>
+              </h2>
+              {reservas.length > 0 && (
+                <p className="text-foreground/70">Reservada por {reservas.map((g) => g.nombre).join(", ")}</p>
+              )}
+              <ol className="mt-1">
+                {sentados.map((i, n) => (
+                  <li key={i.id}>
+                    <span className="inline-block w-6 text-foreground/50">{n + 1}.</span>
+                    {nombreCompleto(i)}
+                  </li>
+                ))}
+                {heredados.map(({ i, g }) => (
+                  <li key={i.id}>
+                    <span className="inline-block w-6 text-foreground/50">–</span>
+                    {nombreCompleto(i)} <span className="text-foreground/50">({g.nombre})</span>
+                  </li>
+                ))}
+              </ol>
+              {!sentados.length && !heredados.length && <p className="mt-1 text-foreground/50">Sin invitados cargados.</p>}
+            </section>
+          );
+        })}
+      </div>
+
+      {gruposVariasMesas.length > 0 && (
+        <div className="mt-2 text-xs">
+          <h2 className="mb-1 text-sm font-semibold text-primario">Organizaciones con varias mesas</h2>
+          <p className="mb-2 text-foreground/70">Invitados cargados sin una mesa específica asignada.</p>
+          <div className="columns-2 gap-6">
+            {gruposVariasMesas.map((g) => (
+              <section key={g.id} className="mb-3 break-inside-avoid">
+                <h3 className="font-semibold">
+                  {g.nombre} · mesas{" "}
+                  {g.mesaIds
+                    .map((id) => mesas.find((m) => m.id === id)?.numero)
+                    .filter((n) => n != null)
+                    .sort((a, b) => a! - b!)
+                    .join(", ")}
+                </h3>
+                <ul>
+                  {sinMesaPropia(g).map((i) => (
+                    <li key={i.id}>{nombreCompleto(i)}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -2,7 +2,8 @@
 
 import { addDoc, arrayRemove, collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { useMemo, useState, type FormEvent } from "react";
-import { PlanoSalon } from "@/components/admin/PlanoSalon";
+import { BotonImprimir, EncabezadoImpresion, PieImpresion } from "@/components/admin/Impresion";
+import { ImpresionUbicaciones, PlanoSalon } from "@/components/admin/PlanoSalon";
 import { Boton, Campo, EstadoCarga, Modal, Titulo } from "@/components/admin/ui";
 import { db } from "@/lib/firebase/cliente";
 import { useColeccion } from "@/lib/firebase/useColeccion";
@@ -40,6 +41,7 @@ export default function PaginaMesas() {
       <Titulo
         acciones={
           <>
+            <BotonImprimir>Imprimir ubicaciones</BotonImprimir>
             <Boton variante="secundario" onClick={() => setCreandoVarias(true)}>
               Crear varias
             </Boton>
@@ -50,69 +52,79 @@ export default function PaginaMesas() {
         Mesas ({mesas.datos.length})
       </Titulo>
 
-      <div role="tablist" className="mb-4 inline-flex rounded-lg border border-borde bg-superficie p-1 text-sm">
-        {(["plano", "lista"] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={vista === v}
-            onClick={() => setVista(v)}
-            className={`rounded-md px-4 py-1.5 ${vista === v ? "bg-primario font-medium text-white" : "hover:bg-primario-claro"}`}
-          >
-            {v === "plano" ? "Plano del salón" : "Lista"}
-          </button>
-        ))}
-      </div>
+      <EncabezadoImpresion
+        titulo="Ubicación de las mesas"
+        detalle={`${mesas.datos.length} mesas · ${invitados.filter((i) => i.mesaId).length} invitados con mesa asignada`}
+      />
+      {!mesas.cargando && <ImpresionUbicaciones mesas={ordenadas} invitados={invitados} grupos={grupos} />}
+      <PieImpresion />
 
-      <EstadoCarga cargando={mesas.cargando} error={mesas.error} />
-
-      {!mesas.cargando && vista === "plano" && (
-        <PlanoSalon
-          mesas={ordenadas}
-          invitados={invitados}
-          grupos={grupos}
-          alEditar={setEditando}
-          alEliminar={eliminar}
-        />
-      )}
-
-      {vista === "lista" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {ordenadas.map((m) => {
-            const sentados = invitados.filter((i) => i.mesaId === m.id);
-            const reservas = grupos.filter((g) => g.mesaIds.includes(m.id));
-            const llena = sentados.length >= m.capacidad;
-            return (
-              <article key={m.id} className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-lg font-semibold">{nombreMesa(m)}</h2>
-                  <span className={`text-sm ${llena ? "font-medium text-peligro" : "text-foreground/60"}`}>
-                    {sentados.length}/{m.capacidad}
-                  </span>
-                </div>
-                {reservas.length > 0 && (
-                  <p className="text-sm text-acento">Reservada por {reservas.map((g) => g.nombre).join(", ")}</p>
-                )}
-                {sentados.length > 0 && (
-                  <ul className="text-sm text-foreground/70">
-                    {sentados.map((i) => (
-                      <li key={i.id}>{nombreCompleto(i)}</li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-auto flex gap-3 pt-2">
-                  <Boton variante="texto" className="px-0" onClick={() => setEditando(m)}>Editar</Boton>
-                  <Boton variante="texto" className="px-0 text-peligro" onClick={() => eliminar(m)}>Eliminar</Boton>
-                </div>
-              </article>
-            );
-          })}
+      <div className="print:hidden">
+        <div role="tablist" className="mb-4 inline-flex rounded-lg border border-borde bg-superficie p-1 text-sm">
+          {(["plano", "lista"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={vista === v}
+              onClick={() => setVista(v)}
+              className={`rounded-md px-4 py-1.5 ${vista === v ? "bg-primario-fondo font-medium text-white" : "hover:bg-primario-claro"}`}
+            >
+              {v === "plano" ? "Plano del salón" : "Lista"}
+            </button>
+          ))}
         </div>
-      )}
-      {vista === "lista" && !mesas.cargando && !mesas.datos.length && (
-        <p className="py-8 text-center text-foreground/50">Todavía no hay mesas. Podés crear varias de una vez.</p>
-      )}
+
+        <EstadoCarga cargando={mesas.cargando} error={mesas.error} />
+
+        {!mesas.cargando && vista === "plano" && (
+          <PlanoSalon
+            mesas={ordenadas}
+            invitados={invitados}
+            grupos={grupos}
+            alEditar={setEditando}
+            alEliminar={eliminar}
+          />
+        )}
+
+        {vista === "lista" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ordenadas.map((m) => {
+              const sentados = invitados.filter((i) => i.mesaId === m.id);
+              const reservas = grupos.filter((g) => g.mesaIds.includes(m.id));
+              const llena = sentados.length >= m.capacidad;
+              return (
+                <article key={m.id} className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-5">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h2 className="text-lg font-semibold">{nombreMesa(m)}</h2>
+                    <span className={`text-sm ${llena ? "font-medium text-peligro" : "text-foreground/60"}`}>
+                      {sentados.length}/{m.capacidad}
+                    </span>
+                  </div>
+                  {reservas.length > 0 && (
+                    <p className="text-sm text-acento">Reservada por {reservas.map((g) => g.nombre).join(", ")}</p>
+                  )}
+                  {sentados.length > 0 && (
+                    <ul className="text-sm text-foreground/70">
+                      {sentados.map((i) => (
+                        <li key={i.id}>{nombreCompleto(i)}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="mt-auto flex gap-3 pt-2">
+                    <Boton variante="texto" className="px-0" onClick={() => setEditando(m)}>Editar</Boton>
+                    <Boton variante="texto" className="px-0 text-peligro" onClick={() => eliminar(m)}>Eliminar</Boton>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+        {vista === "lista" && !mesas.cargando && !mesas.datos.length && (
+          <p className="py-8 text-center text-foreground/50">Todavía no hay mesas. Podés crear varias de una vez.</p>
+        )}
+
+      </div>
 
       {editando && (
         <FormularioMesa

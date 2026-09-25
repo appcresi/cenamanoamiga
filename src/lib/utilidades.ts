@@ -15,24 +15,20 @@ export function normalizarDni(dni: string): string {
 export function normalizarTexto(texto: string): string {
   return texto
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{M}/gu, "") // quita los acentos que separó normalize
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
 }
 
-export function formatearFecha(fecha: string): string {
+/** "viernes 20 de noviembre · 21:00 h" (sin año, para que entre en una línea). */
+export function formatearFechaCorta(fecha: string): string {
   if (!fecha) return "";
   const d = new Date(fecha);
   if (Number.isNaN(d.getTime())) return fecha;
-  return d.toLocaleString("es-AR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const dia = d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+  const hora = d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${dia} · ${hora} h`;
 }
 
 export function nombreCompleto(i: { nombre: string; apellido: string }): string {

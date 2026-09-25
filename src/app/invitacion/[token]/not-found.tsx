@@ -9,7 +9,7 @@ export default function InvitacionNoEncontrada() {
         El link no es válido o la invitación fue eliminada. Revisá que esté completo o buscá tu
         mesa con tu DNI o el nombre de tu organización.
       </p>
-      <Link href="/" className="rounded-lg bg-primario px-5 py-3 font-medium text-white">
+      <Link href="/" className="rounded-lg bg-primario-fondo px-5 py-3 font-medium text-white">
         Buscar mi mesa
       </Link>
     </main>

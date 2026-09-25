@@ -2,6 +2,7 @@
 
 import { addDoc, collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { useMemo, useState, type FormEvent } from "react";
+import { BotonImprimir, EncabezadoImpresion, PieImpresion } from "@/components/admin/Impresion";
 import { ModalCompartir } from "@/components/admin/ModalCompartir";
 import { AreaTexto, Boton, Campo, EstadoCarga, Modal, Selector, Titulo } from "@/components/admin/ui";
 import { db } from "@/lib/firebase/cliente";
@@ -51,17 +52,25 @@ export default function PaginaGrupos() {
 
   return (
     <>
-      <Titulo acciones={<Boton onClick={() => setEditando("nuevo")}>+ Nueva organización / grupo</Boton>}>
+      <Titulo
+        acciones={
+          <>
+            <BotonImprimir>Imprimir listado</BotonImprimir>
+            <Boton onClick={() => setEditando("nuevo")}>+ Nueva organización / grupo</Boton>
+          </>
+        }
+      >
         Organizaciones y grupos ({grupos.datos.length})
       </Titulo>
-      <p className="mb-6 max-w-2xl text-sm text-foreground/70">
+      <EncabezadoImpresion titulo="Organizaciones y grupos" detalle={`${grupos.datos.length} en total`} />
+      <p className="mb-6 max-w-2xl text-sm text-foreground/70 print:hidden">
         Usá los grupos para empresas, fundaciones, asociaciones, bancos u otras instituciones que compran una mesa, o para familias que vienen juntas. El link
         del grupo muestra sus mesas aunque no hayas cargado a cada integrante.
       </p>
 
       <EstadoCarga cargando={grupos.cargando} error={grupos.error} />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 print:hidden">
         {ordenados.map((g) => {
           const cargados = invitados.filter((i) => i.grupoId === g.id).length;
           const nombresMesas = g.mesaIds
@@ -101,6 +110,38 @@ export default function PaginaGrupos() {
       {!grupos.cargando && !grupos.datos.length && (
         <p className="py-8 text-center text-foreground/50">Todavía no hay organizaciones ni grupos.</p>
       )}
+
+      <table className="hidden w-full text-left text-xs print:table">
+        <thead className="border-b-2 border-borde">
+          <tr>
+            <th className="py-1.5 pr-3">Nombre</th>
+            <th className="py-1.5 pr-3">Tipo</th>
+            <th className="py-1.5 pr-3">Contacto</th>
+            <th className="py-1.5 pr-3">Mesas</th>
+            <th className="py-1.5 pr-3 text-right">Lugares</th>
+            <th className="py-1.5 text-right">Invitados cargados</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordenados.map((g) => (
+            <tr key={g.id} className="break-inside-avoid border-b border-borde">
+              <td className="py-1.5 pr-3 font-medium">{g.nombre}</td>
+              <td className="py-1.5 pr-3">{ETIQUETAS_TIPO_GRUPO[g.tipo] ?? g.tipo}</td>
+              <td className="py-1.5 pr-3">{[g.contacto, g.telefono, g.email].filter(Boolean).join(" · ") || "—"}</td>
+              <td className="py-1.5 pr-3">
+                {g.mesaIds
+                  .map((id) => mesaPorId.get(id)?.numero)
+                  .filter((n) => n != null)
+                  .sort((a, b) => a! - b!)
+                  .join(", ") || "—"}
+              </td>
+              <td className="py-1.5 pr-3 text-right">{g.lugares || "—"}</td>
+              <td className="py-1.5 text-right">{invitados.filter((i) => i.grupoId === g.id).length}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <PieImpresion />
 
       {editando && (
         <FormularioGrupo

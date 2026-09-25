@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { BotonTema } from "@/components/BotonTema";
+import { SCRIPT_TEMA } from "@/lib/tema";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,11 +21,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // data-theme lo pone SCRIPT_TEMA antes de hidratar: difiere del HTML del servidor a propósito.
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <BotonTema flotante />
+      </body>
     </html>
   );
 }

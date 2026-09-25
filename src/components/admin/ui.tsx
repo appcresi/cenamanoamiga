@@ -3,7 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 
 const estiloCampo =
-  "w-full rounded-lg border border-borde bg-superficie px-3 py-2 outline-none focus:border-primario";
+  "w-full rounded-lg border border-borde bg-superficie px-3 py-2 outline-none transition-shadow focus:border-primario focus:ring-4 focus:ring-primario/15";
 
 export function Campo({
   etiqueta,
@@ -48,7 +48,7 @@ export function Selector({
 }
 
 const variantes = {
-  primario: "bg-primario text-white hover:bg-primario/90",
+  primario: "bg-primario-fondo text-white hover:bg-primario-fondo/90",
   secundario: "border border-borde bg-superficie hover:bg-primario-claro",
   peligro: "bg-peligro text-white hover:bg-peligro/90",
   texto: "text-primario hover:underline",
@@ -62,7 +62,7 @@ export function Boton({
   return (
     <button
       type="button"
-      className={`rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 ${variantes[variante]} ${className}`}
+      className={`rounded-lg px-4 py-2 text-sm font-medium transition active:scale-[0.97] disabled:opacity-60 ${variantes[variante]} ${className}`}
       {...props}
     />
   );
@@ -79,14 +79,14 @@ export function Modal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex animate-fundido items-end justify-center bg-black/40 sm:items-center sm:p-4"
       onClick={alCerrar}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-superficie p-6 shadow-xl sm:rounded-2xl"
+        className="max-h-[90vh] w-full max-w-lg animate-aparecer overflow-y-auto rounded-t-2xl bg-superficie p-6 shadow-xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
@@ -103,7 +103,7 @@ export function Modal({
 
 export function Titulo({ children, acciones }: { children: ReactNode; acciones?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
       <h1 className="text-2xl font-semibold text-primario">{children}</h1>
       {acciones && <div className="flex flex-wrap gap-2">{acciones}</div>}
     </div>

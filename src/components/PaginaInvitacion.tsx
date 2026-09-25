@@ -1,64 +1,93 @@
 import Link from "next/link";
+import { Creditos } from "@/components/Creditos";
 import { Encabezado } from "@/components/Encabezado";
+import { FondoAnimado } from "@/components/FondoAnimado";
 import { InfoEvento } from "@/components/InfoEvento";
 import { PlanoInvitado } from "@/components/PlanoInvitado";
 import type { Evento, VistaInvitacion } from "@/lib/tipos";
-import { nombreMesa } from "@/lib/utilidades";
 
-/** Contenido de la invitación: mesa(s), plano del salón y datos del evento. */
+/** Mesa(s), plano del salón y datos del evento; pensado para entrar en una pantalla del celular. */
 export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; evento: Evento }) {
+  const numeros = vista.mesas.map((m) => m.numero);
+  const nombresMesas = vista.mesas.map((m) => m.nombre).filter(Boolean);
+
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-8 px-4 py-12">
-      <Encabezado titulo={evento.nombre} />
+    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-2.5 px-4 py-3 sm:gap-6 sm:py-10 [@media(max-height:700px)]:gap-2">
+      <FondoAnimado />
+      <Encabezado titulo={evento.nombre} compacto />
 
-      <section className="w-full rounded-2xl bg-primario p-6 text-center text-white">
-        <p className="text-sm text-white/70">{vista.tipo === "grupo" ? "Mesa de" : "Bienvenido/a"}</p>
-        <p className="mt-1 text-2xl font-semibold">{vista.titulo}</p>
-        {vista.grupo && <p className="mt-1 text-white/70">{vista.grupo}</p>}
-
-        <div className="mt-6 border-t border-white/20 pt-6">
-          {vista.mesas.length ? (
-            <>
-              <p className="text-sm uppercase tracking-wider text-white/70">
-                {vista.mesas.length === 1 ? "Tu mesa" : "Tus mesas"}
-              </p>
-              <ul className="mt-2 flex flex-col gap-1">
-                {vista.mesas.map((m) => (
-                  <li key={m.numero} className="text-4xl font-bold text-acento">
-                    {nombreMesa(m)}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="text-white/80">
-              Tu mesa todavía no fue asignada. Volvé a consultar más cerca del evento.
+      <section
+        className="animate-aparecer rounded-2xl bg-gradient-to-br from-primario-fondo to-[color-mix(in_oklab,var(--primario-fondo),var(--secundario)_35%)] px-5 py-4 text-white shadow-lg [@media(max-height:700px)]:py-3"
+        style={{ animationDelay: "100ms" }}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs text-white/70">
+              {vista.tipo === "grupo" ? "Mesa de" : "Bienvenido/a"}
+              {vista.lugares && ` · ${vista.lugares} lugares`}
             </p>
-          )}
-          {vista.lugares && (
-            <p className="mt-3 text-sm text-white/70">{vista.lugares} lugares reservados</p>
-          )}
+            <p className="text-lg font-semibold leading-snug">{vista.titulo}</p>
+            {vista.grupo && <p className="text-sm text-white/70">{vista.grupo}</p>}
+          </div>
+          <div className="shrink-0 text-right">
+            {numeros.length ? (
+              <>
+                <p className="text-xs uppercase tracking-wider text-white/70">
+                  {numeros.length === 1 ? "Tu mesa" : "Tus mesas"}
+                </p>
+                <p
+                className={`animate-pop font-bold leading-none text-acento ${numeros.length > 2 ? "text-3xl" : "text-5xl"}`}
+                style={{ animationDelay: "350ms" }}
+              >
+                  {numeros.join(" y ").replace(/ y (?=.* y )/g, ", ")}
+                </p>
+                {nombresMesas.length > 0 && <p className="mt-1 text-xs text-white/70">{nombresMesas.join(", ")}</p>}
+              </>
+            ) : (
+              <p className="max-w-32 text-sm text-white/80">Mesa a confirmar</p>
+            )}
+          </div>
         </div>
+        {vista.integrantes.length > 0 && (
+          <details className="group mt-3 border-t border-white/20 pt-2 text-sm">
+            <summary className="cursor-pointer list-none text-white/80">
+              Invitados registrados ({vista.integrantes.length}){" "}
+              <span className="inline-block transition-transform group-open:rotate-90">›</span>
+            </summary>
+            <ul className="mt-2 grid gap-1 text-white/90 sm:grid-cols-2">
+              {vista.integrantes.map((nombre, i) => (
+                <li key={i}>{nombre}</li>
+              ))}
+            </ul>
+          </details>
+        )}
       </section>
 
-      {vista.mesas.length > 0 && <PlanoInvitado plano={vista.plano} />}
-
-      {vista.integrantes.length > 0 && (
-        <section className="w-full rounded-2xl border border-borde bg-superficie p-6">
-          <h2 className="font-medium">Invitados registrados</h2>
-          <ul className="mt-3 grid gap-1 text-foreground/80">
-            {vista.integrantes.map((nombre, i) => (
-              <li key={i}>{nombre}</li>
-            ))}
-          </ul>
-        </section>
+      {numeros.length > 0 ? (
+        <div className="animate-aparecer" style={{ animationDelay: "200ms" }}>
+          <PlanoInvitado plano={vista.plano} />
+        </div>
+      ) : (
+        <p className="text-center text-sm text-foreground/60">
+          Todavía no tenés mesa asignada. Volvé a consultar más cerca del evento.
+        </p>
       )}
 
-      <InfoEvento evento={evento} />
+      <div className="animate-aparecer" style={{ animationDelay: "300ms" }}>
+        <InfoEvento evento={evento} />
+      </div>
 
-      <Link href="/" className="text-sm text-foreground/50 hover:text-primario">
-        Volver al inicio
-      </Link>
+      <footer className="mt-auto flex flex-col items-center gap-1 [@media(max-height:700px)]:gap-0">
+        <div className="flex gap-4 text-sm text-foreground/50">
+          <Link href="/" className="hover:text-primario">
+            Volver al inicio
+          </Link>
+          <Link href="/terminos" className="hover:text-primario">
+            Términos y condiciones
+          </Link>
+        </div>
+        <Creditos />
+      </footer>
     </main>
   );
 }
