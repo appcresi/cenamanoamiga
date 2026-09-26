@@ -18,7 +18,7 @@ export default function PaginaEvento() {
 
   if (!evento) return <p className="text-foreground/60">Cargando…</p>;
 
-  const cambiar = (campo: keyof Evento, valor: string) => {
+  const cambiar = <K extends keyof Evento>(campo: K, valor: Evento[K]) => {
     setEvento({ ...evento, [campo]: valor });
     setEstado("");
   };
@@ -42,10 +42,18 @@ export default function PaginaEvento() {
       </p>
       <form onSubmit={guardar} className="grid max-w-2xl gap-4 rounded-xl border border-borde bg-superficie p-6 sm:grid-cols-2">
         <Campo etiqueta="Nombre del evento" required className="sm:col-span-2" value={evento.nombre} onChange={(e) => cambiar("nombre", e.target.value)} />
-        <Campo etiqueta="Fecha y hora" type="datetime-local" value={evento.fecha} onChange={(e) => cambiar("fecha", e.target.value)} />
+        <Campo etiqueta="Fecha y hora (Argentina)" type="datetime-local" value={evento.fecha} onChange={(e) => cambiar("fecha", e.target.value)} />
         <Campo etiqueta="Vestimenta" placeholder="Ej: Elegante sport" value={evento.vestimenta} onChange={(e) => cambiar("vestimenta", e.target.value)} />
         <Campo etiqueta="Lugar" placeholder="Ej: Salón ..." value={evento.lugar} onChange={(e) => cambiar("lugar", e.target.value)} />
         <Campo etiqueta="Dirección" value={evento.direccion} onChange={(e) => cambiar("direccion", e.target.value)} />
+        <Campo
+          etiqueta="Link de Google Maps (opcional)"
+          type="url"
+          className="sm:col-span-2"
+          placeholder="Pegá el link de «Compartir» de Google Maps para marcar el lugar exacto"
+          value={evento.mapa}
+          onChange={(e) => cambiar("mapa", e.target.value)}
+        />
         <AreaTexto etiqueta="Información adicional" rows={5} className="sm:col-span-2" placeholder="Programa, estacionamiento, contacto, etc." value={evento.informacion} onChange={(e) => cambiar("informacion", e.target.value)} />
         <div className="flex items-center justify-end gap-3 sm:col-span-2">
           {estado === "guardado" && <span className="text-sm text-green-700 dark:text-green-400">Guardado ✓</span>}

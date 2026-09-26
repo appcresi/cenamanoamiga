@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Evento } from "@/lib/tipos";
 import { formatearFechaCorta } from "@/lib/utilidades";
+import { CuentaRegresiva } from "./CuentaRegresiva";
 
 // Íconos de línea simples (stroke = color del texto).
 const ICONOS = {
@@ -20,6 +21,13 @@ function Fila({ icono, children }: { icono: keyof typeof ICONOS; children: React
   );
 }
 
+/** Link a Google Maps: el pegado por los organizadores o, si no hay, una búsqueda del lugar. */
+export function linkMapa(evento: Evento): string {
+  if (evento.mapa?.trim()) return evento.mapa.trim();
+  const consulta = [evento.lugar, evento.direccion].filter(Boolean).join(", ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(consulta)}`;
+}
+
 /** Datos del evento en pocas líneas; la información adicional se despliega al tocarla. */
 export function InfoEvento({ evento }: { evento: Evento }) {
   const fecha = formatearFechaCorta(evento.fecha);
@@ -28,33 +36,37 @@ export function InfoEvento({ evento }: { evento: Evento }) {
   if (!fecha && !lugar && !evento.vestimenta && !evento.informacion) return null;
 
   return (
-    <section className="w-full rounded-2xl border border-borde bg-superficie px-4 py-3 text-sm [@media(max-height:700px)]:py-2">
+    <section className="relative flex w-full flex-col gap-2.5 rounded-2xl border border-borde bg-superficie px-4 py-3 text-sm [@media(max-height:700px)]:gap-2 [@media(max-height:700px)]:py-2">
+      {/* Sticker en la esquina, al estilo de la cinta del flyer. */}
+      <span className="absolute -right-2 -top-2.5 z-10 rotate-6 rounded-md bg-acento px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+        ¡Te esperamos!
+      </span>
+      {evento.fecha && <CuentaRegresiva fecha={evento.fecha} />}
       <ul className="grid gap-1.5">
-        {fecha && <Fila icono="fecha"><span className="first-letter:uppercase">{fecha}</span></Fila>}
+        {fecha && (
+          <Fila icono="fecha">
+            <span className="first-letter:uppercase">{fecha}</span>
+          </Fila>
+        )}
         {lugar && (
           <Fila icono="lugar">
-            {lugar}
-            {evento.direccion && (
-              <>
-                {" "}
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    [evento.lugar, evento.direccion].filter(Boolean).join(", "),
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="whitespace-nowrap font-medium text-primario underline underline-offset-2"
-                >
-                  Ver mapa
-                </a>
-              </>
-            )}
+            <span className="flex items-start justify-between gap-2">
+              <span>{lugar}</span>
+              <a
+                href={linkMapa(evento)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="-my-0.5 shrink-0 whitespace-nowrap rounded-full bg-primario-fondo px-2.5 py-1 text-xs font-medium text-white transition hover:-translate-y-0.5 active:scale-95"
+              >
+                Cómo llegar ↗
+              </a>
+            </span>
           </Fila>
         )}
         {evento.vestimenta && <Fila icono="vestimenta">{evento.vestimenta}</Fila>}
       </ul>
       {evento.informacion && (
-        <details className="group mt-2 border-t border-borde pt-2">
+        <details className="group border-t border-borde pt-2">
           <summary className="cursor-pointer list-none font-medium text-primario">
             Más información <span className="inline-block transition-transform group-open:rotate-90">›</span>
           </summary>

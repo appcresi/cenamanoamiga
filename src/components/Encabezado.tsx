@@ -1,6 +1,24 @@
+import { Kaushan_Script } from "next/font/google";
 import Image from "next/image";
 import icono from "../../public/manoamiga-icono.png";
 import logo from "../../public/manoamiga-santa-maria.svg";
+
+// Letra manuscrita para la última palabra del título, como en el flyer ("educación").
+const manuscrita = Kaushan_Script({ weight: "400", subsets: ["latin"], display: "swap" });
+
+/** "Una noche por la educación" → "Una noche por la " + <educación en naranja manuscrita>. */
+function TituloDestacado({ texto }: { texto: string }) {
+  const corte = texto.trim().lastIndexOf(" ");
+  if (corte < 0) return <>{texto}</>;
+  return (
+    <>
+      {texto.slice(0, corte + 1)}
+      <span className={`${manuscrita.className} inline-block -rotate-2 font-normal text-acento`}>
+        {texto.slice(corte + 1)}
+      </span>
+    </>
+  );
+}
 
 /**
  * Encabezado con el logo. La versión compacta (logo redondo al costado) deja lugar
@@ -34,7 +52,7 @@ export function Encabezado({
               sobreImagen ? "text-white drop-shadow-[0_2px_8px_rgb(0_0_0/0.6)]" : "text-primario"
             }`}
           >
-            {titulo}
+            <TituloDestacado texto={titulo} />
           </h1>
           <p
             className={`text-xs sm:text-sm [@media(max-height:700px)]:hidden ${
@@ -64,7 +82,7 @@ export function Encabezado({
           sobreImagen ? "text-white drop-shadow-[0_2px_8px_rgb(0_0_0/0.6)]" : "text-primario"
         }`}
       >
-        {titulo}
+        <TituloDestacado texto={titulo} />
       </h1>
       <p
         className={`text-sm [@media(max-height:700px)]:hidden ${

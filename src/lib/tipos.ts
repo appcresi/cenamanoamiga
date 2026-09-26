@@ -11,6 +11,8 @@ export interface Evento {
   direccion: string;
   vestimenta: string;
   informacion: string;
+  /** Link de Google Maps con la ubicación exacta (opcional; si falta se busca lugar + dirección). */
+  mapa: string;
 }
 
 export interface Mesa {
@@ -81,6 +83,7 @@ export const EVENTO_POR_DEFECTO: Evento = {
   direccion: "",
   vestimenta: "",
   informacion: "",
+  mapa: "",
 };
 
 export const ETIQUETAS_TIPO_GRUPO: Record<TipoGrupo, string> = {
