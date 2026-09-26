@@ -137,8 +137,8 @@ export default function Terminos() {
         </p>
         <p>
           <strong>Datos que tratamos:</strong> nombre y apellido, DNI, email, teléfono, organización
-          por la que asistís, mesa asignada, confirmación de asistencia y notas internas de
-          organización. Los organizadores además ingresan con su email de Google.
+          por la que asistís, mesa asignada, confirmación de asistencia, hora de ingreso el día del evento y notas
+          internas de organización. Los organizadores además ingresan con su email de Google.
         </p>
         <p>
           <strong>Para qué los usamos:</strong> identificar a los invitados, asignar y comunicar

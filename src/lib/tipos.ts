@@ -35,6 +35,8 @@ export interface Grupo {
   lugares: number;
   notas: string;
   token: string;
+  /** Personas que ingresaron el día del evento escaneando el QR de la organización. */
+  ingresados?: number;
 }
 
 export interface Invitado {
@@ -51,6 +53,8 @@ export interface Invitado {
   asistencia: Asistencia;
   notas: string;
   token: string;
+  /** Momento del ingreso al evento (ISO), o null si todavía no llegó. */
+  ingreso?: string | null;
 }
 
 /** Lo que ve un invitado (o un grupo) al abrir su link. */

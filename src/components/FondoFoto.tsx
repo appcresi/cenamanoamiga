@@ -15,21 +15,45 @@ function aleatorio(semilla: number) {
 }
 
 const azar = aleatorio(20261120);
+
+/**
+ * Altura de cada destello: la mayoría arriba (detrás del logo y el título, donde no hay
+ * tarjetas que los tapen) y abajo (pie de página); unos pocos en el medio.
+ */
+function alturaVisible(i: number) {
+  const franja = i % 7;
+  if (franja < 4) return 2 + azar() * 34; // arriba
+  if (franja < 6) return 80 + azar() * 17; // abajo
+  return azar() * 100; // cualquier lugar (se ven a los costados en pantallas anchas)
+}
+
 const DESTELLOS = Array.from({ length: 28 }, (_, i) => {
   const color = COLORES[i % 7 === 0 ? 3 : i % 5 === 0 ? 2 : Math.floor(azar() * 2)];
   return {
-    // Más destellos arriba, donde la foto tiene las luces.
     x: Math.round(azar() * 100),
-    y: Math.round(Math.pow(azar(), 1.6) * 90),
-    tamano: Math.round(14 + azar() * 46),
-    duracion: (4 + azar() * 6).toFixed(1),
-    retraso: (-azar() * 10).toFixed(1),
-    brillo: (0.45 + azar() * 0.5).toFixed(2),
+    y: Math.round(alturaVisible(i)),
+    tamano: Math.round(24 + azar() * 56),
+    duracion: (3.5 + azar() * 5).toFixed(1),
+    retraso: (-azar() * 9).toFixed(1),
+    brillo: (0.8 + azar() * 0.2).toFixed(2),
     color,
-    // En el celular se muestra solo la mitad, para no recargar.
-    soloGrande: i % 2 === 1,
+    // Uno de cada tres es una estrella de cuatro puntas; el resto, círculos de luz.
+    estrella: i % 3 === 0,
+    // En el celular se muestran 20 de 28, para no recargar.
+    soloGrande: i % 4 === 3,
   };
 });
+
+const circulo = (c: string) =>
+  `radial-gradient(circle, rgb(255 255 255 / 0.95) 0%, rgb(${c} / 0.85) 22%, rgb(${c} / 0.3) 48%, transparent 70%)`;
+
+// Núcleo brillante + dos rayos finos cruzados (horizontal y vertical).
+const estrella = (c: string) =>
+  [
+    `radial-gradient(circle, rgb(255 255 255) 0 6%, rgb(${c} / 0.9) 12%, rgb(${c} / 0.3) 26%, transparent 45%)`,
+    `linear-gradient(0deg, transparent 48.5%, rgb(255 255 255 / 0.9) 50%, transparent 51.5%)`,
+    `linear-gradient(90deg, transparent 48.5%, rgb(255 255 255 / 0.9) 50%, transparent 51.5%)`,
+  ].join(", ");
 
 /** Foto de la cena a pantalla completa, con destellos de luz y un velo oscuro para leer el contenido. */
 export function FondoFoto() {
@@ -48,14 +72,16 @@ export function FondoFoto() {
       {DESTELLOS.map((d, i) => (
         <span
           key={i}
-          className={`absolute animate-titilar rounded-full mix-blend-screen ${d.soloGrande ? "hidden sm:block" : ""}`}
+          className={`absolute -translate-x-1/2 -translate-y-1/2 animate-titilar rounded-full mix-blend-screen ${d.soloGrande ? "hidden sm:block" : ""}`}
           style={
             {
               left: `${d.x}%`,
               top: `${d.y}%`,
-              width: d.tamano,
-              height: d.tamano,
-              background: `radial-gradient(circle, rgb(${d.color} / 0.95) 0%, rgb(${d.color} / 0.35) 40%, transparent 70%)`,
+              width: d.estrella ? d.tamano * 1.4 : d.tamano,
+              height: d.estrella ? d.tamano * 1.4 : d.tamano,
+              background: d.estrella ? estrella(d.color) : circulo(d.color),
+              // Los rayos de la estrella se desvanecen hacia las puntas.
+              maskImage: d.estrella ? "radial-gradient(circle, #000 18%, transparent 70%)" : undefined,
               animationDuration: `${d.duracion}s`,
               animationDelay: `${d.retraso}s`,
               "--brillo": d.brillo,

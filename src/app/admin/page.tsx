@@ -19,6 +19,11 @@ export default function Resumen() {
   const tarjetas = [
     { titulo: "Invitados cargados", valor: lista.length, href: "/admin/invitados" },
     { titulo: "Confirmados", valor: lista.filter((i) => i.asistencia === "confirmado").length, href: "/admin/invitados" },
+    {
+      titulo: "Ingresaron al evento",
+      valor: lista.filter((i) => i.ingreso).length + grupos.reduce((total, g) => total + (g.ingresados ?? 0), 0),
+      href: "/admin/invitados",
+    },
     { titulo: "Pendientes", valor: lista.filter((i) => i.asistencia === "pendiente").length, href: "/admin/invitados" },
     { titulo: "Sin mesa asignada", valor: sinMesa, href: "/admin/invitados" },
     { titulo: "Organizaciones y grupos", valor: grupos.length, href: "/admin/grupos" },

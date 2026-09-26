@@ -98,6 +98,11 @@ export default function PaginaGrupos() {
               <p className="text-sm text-foreground/70">
                 {cargados} invitados cargados{g.lugares ? ` de ${g.lugares} lugares` : ""}
               </p>
+              {(g.ingresados ?? 0) > 0 && (
+                <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                  ✓ Ingresaron {g.ingresados} con el QR de la organización
+                </p>
+              )}
               <div className="mt-auto flex flex-wrap gap-x-3 pt-2">
                 <Boton variante="texto" className="px-0" onClick={() => setCompartiendo(g)}>Link/QR</Boton>
                 <Boton variante="texto" className="px-0" onClick={() => setEditando(g)}>Editar</Boton>

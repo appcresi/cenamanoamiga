@@ -8,6 +8,7 @@ import { AreaTexto, Boton, Campo, EstadoCarga, Modal, Selector, Titulo } from "@
 import { db } from "@/lib/firebase/cliente";
 import { useColeccion } from "@/lib/firebase/useColeccion";
 import { ETIQUETAS_ASISTENCIA, type Asistencia, type Grupo, type Invitado, type Mesa } from "@/lib/tipos";
+import { horaArgentina } from "@/lib/ingreso";
 import { generarToken, nombreCompleto, nombreMesa, normalizarDni } from "@/lib/utilidades";
 
 type Borrador = Omit<Invitado, "id" | "token">;
@@ -142,6 +143,11 @@ export default function PaginaInvitados() {
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COLOR_ASISTENCIA[i.asistencia]}`}>
                       {ETIQUETAS_ASISTENCIA[i.asistencia]}
                     </span>
+                    {i.ingreso && (
+                      <span className="mt-1 block text-xs font-medium text-green-700 dark:text-green-400">
+                        ✓ Ingresó {horaArgentina(i.ingreso)}
+                      </span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right print:hidden">
                     <Boton variante="texto" onClick={() => setCompartiendo(i)}>Link/QR</Boton>
@@ -149,7 +155,7 @@ export default function PaginaInvitados() {
                     <Boton variante="texto" className="text-peligro" onClick={() => eliminar(i)}>Eliminar</Boton>
                   </td>
                   <td className="hidden px-4 py-3 print:table-cell">
-                    <span className="inline-block size-4 rounded border border-foreground/40" />
+                    {i.ingreso ? "✓" : <span className="inline-block size-4 rounded border border-foreground/40" />}
                   </td>
                 </tr>
               ))}
@@ -275,6 +281,14 @@ function FormularioInvitado({
           ))}
         </Selector>
         <AreaTexto etiqueta="Notas internas" className="sm:col-span-2" value={datos.notas} onChange={(e) => cambiar("notas", e.target.value)} />
+        {datos.ingreso && (
+          <p className="flex items-center justify-between gap-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800 dark:bg-green-400/10 dark:text-green-300 sm:col-span-2">
+            ✓ Ingresó al evento a las {horaArgentina(datos.ingreso)}
+            <Boton variante="texto" className="px-0" onClick={() => cambiar("ingreso", null)}>
+              Anular ingreso
+            </Boton>
+          </p>
+        )}
         {error && <p className="text-sm text-peligro sm:col-span-2">{error}</p>}
         <div className="flex justify-end gap-2 sm:col-span-2">
           <Boton variante="secundario" onClick={alCerrar}>
