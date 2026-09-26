@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { Creditos } from "@/components/Creditos";
 import { Encabezado } from "@/components/Encabezado";
-import { FondoAnimado } from "@/components/FondoAnimado";
+import { FondoFoto } from "@/components/FondoFoto";
 import { InfoEvento } from "@/components/InfoEvento";
 import { PlanoInvitado } from "@/components/PlanoInvitado";
 import type { Evento, VistaInvitacion } from "@/lib/tipos";
+
+// Tarjetas semitransparentes ("vidrio") sobre la foto de fondo.
+const VIDRIO = "[&>section]:border-white/20 [&>section]:bg-superficie/90 [&>section]:shadow-xl [&>section]:backdrop-blur-md";
 
 /** Mesa(s), plano del salón y datos del evento; pensado para entrar en una pantalla del celular. */
 export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; evento: Evento }) {
@@ -13,8 +16,8 @@ export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; ev
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-2.5 px-4 py-3 sm:gap-6 sm:py-10 [@media(max-height:700px)]:gap-2">
-      <FondoAnimado />
-      <Encabezado titulo={evento.nombre} compacto />
+      <FondoFoto />
+      <Encabezado titulo={evento.nombre} compacto sobreImagen />
 
       <section
         className="animate-aparecer rounded-2xl bg-gradient-to-br from-primario-fondo to-[color-mix(in_oklab,var(--primario-fondo),var(--secundario)_35%)] px-5 py-4 text-white shadow-lg [@media(max-height:700px)]:py-3"
@@ -64,29 +67,29 @@ export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; ev
       </section>
 
       {numeros.length > 0 ? (
-        <div className="animate-aparecer" style={{ animationDelay: "200ms" }}>
+        <div className={`animate-aparecer ${VIDRIO} [&>section]:bg-superficie/95`} style={{ animationDelay: "200ms" }}>
           <PlanoInvitado plano={vista.plano} />
         </div>
       ) : (
-        <p className="text-center text-sm text-foreground/60">
+        <p className="text-center text-sm text-white/85 drop-shadow-[0_1px_4px_rgb(0_0_0/0.6)]">
           Todavía no tenés mesa asignada. Volvé a consultar más cerca del evento.
         </p>
       )}
 
-      <div className="animate-aparecer" style={{ animationDelay: "300ms" }}>
+      <div className={`animate-aparecer ${VIDRIO}`} style={{ animationDelay: "300ms" }}>
         <InfoEvento evento={evento} />
       </div>
 
       <footer className="mt-auto flex flex-col items-center gap-1 [@media(max-height:700px)]:gap-0">
-        <div className="flex gap-4 text-sm text-foreground/50">
-          <Link href="/" className="hover:text-primario">
+        <div className="flex gap-4 text-sm text-white/75">
+          <Link href="/" className="hover:text-white">
             Volver al inicio
           </Link>
-          <Link href="/terminos" className="hover:text-primario">
+          <Link href="/terminos" className="hover:text-white">
             Términos y condiciones
           </Link>
         </div>
-        <Creditos />
+        <Creditos className="text-white/60" />
       </footer>
     </main>
   );

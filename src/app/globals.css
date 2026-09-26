@@ -65,6 +65,8 @@
   --animate-sacudir: sacudir 0.4s ease-in-out both;
   --animate-flotar: flotar 6s ease-in-out infinite;
   --animate-deriva: deriva 20s ease-in-out infinite alternate;
+  --animate-acercar: acercar 30s ease-in-out infinite alternate;
+  --animate-titilar: titilar 6s ease-in-out infinite;
 
   @keyframes aparecer {
     from {
@@ -110,6 +112,26 @@
     }
     50% {
       transform: translateY(-6px);
+    }
+  }
+  /* Destello que se prende y se apaga; --brillo fija la intensidad máxima de cada uno. */
+  @keyframes titilar {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    50% {
+      opacity: var(--brillo, 0.8);
+      transform: scale(1);
+    }
+  }
+  @keyframes acercar {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.08);
     }
   }
   @keyframes deriva {
