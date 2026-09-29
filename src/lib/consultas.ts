@@ -136,13 +136,12 @@ export async function buscarOrganizaciones(texto: string): Promise<{ id: string;
 }
 
 /**
- * Invitados cuyo nombre completo coincide con el buscado. Pide al menos dos palabras
- * (nombre y apellido) y cada una tiene que ser el comienzo de alguna palabra del nombre,
- * para no listar a todos los "Juan" con una búsqueda suelta.
+ * Invitados cuyo nombre completo coincide con el buscado: cada palabra buscada
+ * (nombre, apellido o ambos) tiene que ser el comienzo de alguna palabra del nombre.
  */
 export async function buscarInvitados(texto: string): Promise<{ token: string; nombre: string }[]> {
   const palabras = normalizarTexto(texto).split(" ").filter(Boolean);
-  if (palabras.length < 2) return [];
+  if (!palabras.length) return [];
   const snap = await adminDb().collection("invitados").get();
   return snap.docs
     .map((d) => d.data() as Invitado)
