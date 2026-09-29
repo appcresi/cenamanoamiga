@@ -1,12 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { buscarOrganizaciones, tokenPorDni } from "@/lib/consultas";
+import { buscarInvitados, buscarOrganizaciones, tokenPorDni } from "@/lib/consultas";
 
 export interface EstadoBusqueda {
   error: string | null;
-  /** Varias organizaciones coinciden: el invitado elige la suya. */
-  opciones: { id: string; nombre: string }[];
+  /** Varias personas u organizaciones coinciden: el invitado elige la suya. */
+  opciones: { href: string; nombre: string; tipo: "invitado" | "organizacion" }[];
 }
 
 const ERROR_TECNICO: EstadoBusqueda = {
@@ -14,7 +14,7 @@ const ERROR_TECNICO: EstadoBusqueda = {
   opciones: [],
 };
 
-/** Si parece un DNI (solo números, puntos o espacios) busca por DNI; si no, por organización. */
+/** Si parece un DNI (solo números, puntos o espacios) busca por DNI; si no, por nombre de invitado u organización. */
 export async function buscarInvitacion(
   _anterior: EstadoBusqueda,
   formData: FormData,
@@ -40,22 +40,30 @@ export async function buscarInvitacion(
   }
 
   if (consulta.length < 3) {
-    return { error: "Escribí al menos 3 letras del nombre de la organización.", opciones: [] };
+    return { error: "Escribí al menos 3 letras de tu nombre o de la organización.", opciones: [] };
   }
 
   let opciones: EstadoBusqueda["opciones"];
   try {
-    opciones = await buscarOrganizaciones(consulta);
+    const [organizaciones, invitados] = await Promise.all([
+      buscarOrganizaciones(consulta),
+      buscarInvitados(consulta),
+    ]);
+    opciones = [
+      ...invitados.map((i) => ({ href: `/invitacion/${i.token}`, nombre: i.nombre, tipo: "invitado" as const })),
+      ...organizaciones.map((o) => ({ href: `/organizacion/${o.id}`, nombre: o.nombre, tipo: "organizacion" as const })),
+    ];
   } catch (error) {
-    console.error("Error buscando organizaciones:", error);
+    console.error("Error buscando por nombre:", error);
     return ERROR_TECNICO;
   }
   if (!opciones.length) {
     return {
-      error: "No encontramos una organización con ese nombre. Probá con otra parte del nombre o con tu DNI.",
+      error:
+        "No encontramos ese nombre. Probá con tu nombre y apellido, el nombre de tu organización o tu DNI.",
       opciones: [],
     };
   }
-  if (opciones.length === 1) redirect(`/organizacion/${opciones[0].id}`);
+  if (opciones.length === 1) redirect(opciones[0].href);
   return { error: null, opciones };
 }

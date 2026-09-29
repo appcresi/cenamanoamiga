@@ -135,6 +135,26 @@ export async function buscarOrganizaciones(texto: string): Promise<{ id: string;
     .slice(0, 8);
 }
 
+/**
+ * Invitados cuyo nombre completo coincide con el buscado. Pide al menos dos palabras
+ * (nombre y apellido) y cada una tiene que ser el comienzo de alguna palabra del nombre,
+ * para no listar a todos los "Juan" con una búsqueda suelta.
+ */
+export async function buscarInvitados(texto: string): Promise<{ token: string; nombre: string }[]> {
+  const palabras = normalizarTexto(texto).split(" ").filter(Boolean);
+  if (palabras.length < 2) return [];
+  const snap = await adminDb().collection("invitados").get();
+  return snap.docs
+    .map((d) => d.data() as Invitado)
+    .filter((i) => {
+      const propias = normalizarTexto(nombreCompleto(i)).split(" ");
+      return palabras.every((p) => propias.some((w) => w.startsWith(p)));
+    })
+    .map((i) => ({ token: i.token, nombre: nombreCompleto(i) }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+    .slice(0, 8);
+}
+
 /** Devuelve el token del invitado con ese DNI, o null. */
 export async function tokenPorDni(dni: string): Promise<string | null> {
   const limpio = normalizarDni(dni);

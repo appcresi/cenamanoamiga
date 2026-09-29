@@ -12,7 +12,7 @@ export function BuscadorInvitacion() {
   return (
     <form action={accion} className="flex w-full flex-col gap-2.5">
       <label htmlFor="consulta" className="sr-only">
-        DNI o nombre de tu organización
+        DNI, nombre y apellido u organización
       </label>
       <div className="flex gap-2">
         <input
@@ -20,7 +20,7 @@ export function BuscadorInvitacion() {
           name="consulta"
           autoComplete="off"
           required
-          placeholder="DNI u organización"
+          placeholder="DNI, nombre u organización"
           className="min-w-0 flex-1 rounded-lg border border-borde bg-superficie px-4 py-3 text-base outline-none transition-shadow focus:border-primario focus:ring-4 focus:ring-primario/15"
         />
         <button
@@ -33,8 +33,8 @@ export function BuscadorInvitacion() {
         </button>
       </div>
       <p className="text-xs text-foreground/60">
-        Buscá tu mesa con tu DNI o el nombre de tu empresa, fundación, asociación o banco. ¿Tenés
-        un link o QR? Abrilo directamente.
+        Buscá tu mesa con tu DNI, tu nombre y apellido o el nombre de tu empresa, fundación,
+        asociación o banco. ¿Tenés un link o QR? Abrilo directamente.
       </p>
       {estado.error && (
         <p key={estado.error} className="animate-sacudir text-sm text-peligro">
@@ -43,15 +43,16 @@ export function BuscadorInvitacion() {
       )}
       {estado.opciones.length > 0 && (
         <div className="flex animate-aparecer flex-col gap-2">
-          <p className="text-sm font-medium">Encontramos varias organizaciones. Elegí la tuya:</p>
+          <p className="text-sm font-medium">Encontramos varias coincidencias. Elegí la tuya:</p>
           <ul className="flex flex-col gap-2">
             {estado.opciones.map((o, i) => (
-              <li key={o.id} className="animate-aparecer" style={{ animationDelay: `${i * 60}ms` }}>
+              <li key={o.href} className="animate-aparecer" style={{ animationDelay: `${i * 60}ms` }}>
                 <Link
-                  href={`/organizacion/${o.id}`}
-                  className="block rounded-lg border border-borde px-4 py-3 transition hover:translate-x-1 hover:border-primario hover:bg-primario-claro"
+                  href={o.href}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-borde px-4 py-3 transition hover:translate-x-1 hover:border-primario hover:bg-primario-claro"
                 >
                   {o.nombre}
+                  {o.tipo === "organizacion" && <span className="text-xs text-foreground/50">Organización</span>}
                 </Link>
               </li>
             ))}
