@@ -72,6 +72,13 @@ export interface VistaInvitacion {
   mesas: { numero: number; nombre: string }[];
   lugares: number | null;
   integrantes: string[];
+  /**
+   * Ya registró su ingreso (una organización: al menos una persona). Hasta entonces
+   * `mesas` y `plano` van vacíos y se muestra el QR para la entrada.
+   */
+  presente: boolean;
+  /** Código que se muestra como QR para la entrada. null en la vista pública de una organización. */
+  token: string | null;
   plano: {
     mesas: { id: string; numero: number; nombre: string; capacidad: number; x?: number; y?: number }[];
     /** Mesas a resaltar (la del invitado o las de su organización). */

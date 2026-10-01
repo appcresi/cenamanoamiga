@@ -4,6 +4,7 @@ import { Encabezado } from "@/components/Encabezado";
 import { FondoFoto } from "@/components/FondoFoto";
 import { InfoEvento } from "@/components/InfoEvento";
 import { PlanoInvitado } from "@/components/PlanoInvitado";
+import { ActualizarAlIngresar, QrEntrada } from "@/components/QrEntrada";
 import type { Evento, VistaInvitacion } from "@/lib/tipos";
 
 // Tarjetas semitransparentes ("vidrio") sobre la foto de fondo.
@@ -33,7 +34,9 @@ export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; ev
             {vista.grupo && <p className="text-sm text-white/70">{vista.grupo}</p>}
           </div>
           <div className="shrink-0 text-right">
-            {numeros.length ? (
+            {!vista.presente ? (
+              <p className="max-w-32 text-sm text-white/80">Tu mesa aparece al registrar el ingreso</p>
+            ) : numeros.length ? (
               <>
                 <p className="text-xs uppercase tracking-wider text-white/70">
                   {numeros.length === 1 ? "Tu mesa" : "Tus mesas"}
@@ -66,13 +69,37 @@ export function PaginaInvitacion({ vista, evento }: { vista: VistaInvitacion; ev
         )}
       </section>
 
-      {numeros.length > 0 ? (
+      {!vista.presente && <ActualizarAlIngresar />}
+
+      {/* El QR de una organización lo comparten todos sus integrantes: no se oculta tras el primer ingreso. */}
+      {vista.token && (!vista.presente || vista.tipo === "grupo") && (
+        <section
+          className="animate-aparecer rounded-2xl border border-white/20 bg-superficie/90 p-4 text-center shadow-xl backdrop-blur-md"
+          style={{ animationDelay: "200ms" }}
+        >
+          <QrEntrada token={vista.token} />
+          <p className="mt-3 text-sm font-medium">Mostrá este código en la entrada</p>
+          <p className="text-xs text-foreground/60">
+            {vista.presente
+              ? "Cada persona de tu organización lo muestra al ingresar."
+              : "Cuando lo escaneen, acá vas a ver la ubicación de tu mesa."}
+          </p>
+        </section>
+      )}
+
+      {!vista.presente ? (
+        !vista.token && (
+          <p className="text-center text-sm text-white/85 drop-shadow-[0_1px_4px_rgb(0_0_0/0.6)]">
+            La ubicación de las mesas se muestra cuando registres tu ingreso con el QR que te envió tu organización.
+          </p>
+        )
+      ) : numeros.length > 0 ? (
         <div className={`animate-aparecer ${VIDRIO} [&>section]:bg-superficie/95`} style={{ animationDelay: "200ms" }}>
           <PlanoInvitado plano={vista.plano} />
         </div>
       ) : (
         <p className="text-center text-sm text-white/85 drop-shadow-[0_1px_4px_rgb(0_0_0/0.6)]">
-          Todavía no tenés mesa asignada. Volvé a consultar más cerca del evento.
+          Todavía no tenés mesa asignada. Consultá en la entrada.
         </p>
       )}
 

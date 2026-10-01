@@ -38,8 +38,10 @@ async function obtenerMesas(): Promise<VistaInvitacion["plano"]["mesas"]> {
     .sort((a, b) => a.numero - b.numero);
 }
 
+type Base = Omit<VistaInvitacion, "mesas" | "plano">;
+
 function armarVista(
-  base: Omit<VistaInvitacion, "mesas" | "plano">,
+  base: Base,
   mesas: VistaInvitacion["plano"]["mesas"],
   mesaIds: string[],
   silla: VistaInvitacion["plano"]["silla"],
@@ -52,6 +54,11 @@ function armarVista(
   };
 }
 
+/** Antes del ingreso no se manda nada de las mesas al navegador. */
+function vistaSinMesas(base: Base): VistaInvitacion {
+  return { ...base, mesas: [], plano: { mesas: [], destacadas: [], silla: null } };
+}
+
 /** Qué lugar de la mesa le toca al invitado (mismo orden que el plano del panel). */
 async function indiceSilla(invitadoId: string, mesaId: string): Promise<number> {
   const snap = await adminDb().collection("invitados").where("mesaId", "==", mesaId).get();
@@ -59,25 +66,26 @@ async function indiceSilla(invitadoId: string, mesaId: string): Promise<number> 
   return sentados.findIndex((i) => i.id === invitadoId);
 }
 
-async function vistaDeGrupo(id: string, grupo: Grupo, conIntegrantes: boolean): Promise<VistaInvitacion> {
+/**
+ * `conToken`: se entró con el link/QR del grupo (muestra integrantes y el QR, que comparten
+ * todos y por eso no desaparece). Sin token es la vista pública de la búsqueda.
+ */
+async function vistaDeGrupo(id: string, grupo: Grupo, conToken: boolean): Promise<VistaInvitacion> {
+  const presente = (grupo.ingresados ?? 0) > 0;
   const [mesas, integrantes] = await Promise.all([
-    obtenerMesas(),
-    conIntegrantes
-      ? adminDb().collection("invitados").where("grupoId", "==", id).get()
-      : Promise.resolve(null),
+    presente ? obtenerMesas() : Promise.resolve([]),
+    conToken ? adminDb().collection("invitados").where("grupoId", "==", id).get() : Promise.resolve(null),
   ]);
-  return armarVista(
-    {
-      tipo: "grupo",
-      titulo: grupo.nombre,
-      grupo: null,
-      lugares: conIntegrantes ? grupo.lugares || null : null,
-      integrantes: integrantes?.docs.map((d) => nombreCompleto(d.data() as Invitado)).sort() ?? [],
-    },
-    mesas,
-    grupo.mesaIds ?? [],
-    null,
-  );
+  const base: Base = {
+    tipo: "grupo",
+    titulo: grupo.nombre,
+    grupo: null,
+    lugares: conToken ? grupo.lugares || null : null,
+    integrantes: integrantes?.docs.map((d) => nombreCompleto(d.data() as Invitado)).sort() ?? [],
+    presente,
+    token: conToken ? grupo.token : null,
+  };
+  return presente ? armarVista(base, mesas, grupo.mesaIds ?? [], null) : vistaSinMesas(base);
 }
 
 export async function buscarPorToken(token: string): Promise<VistaInvitacion | null> {
@@ -90,13 +98,24 @@ export async function buscarPorToken(token: string): Promise<VistaInvitacion | n
     const invitado = doc.data() as Invitado;
     const grupoSnap = invitado.grupoId ? await db.doc(`grupos/${invitado.grupoId}`).get() : null;
     const grupo = grupoSnap?.exists ? (grupoSnap.data() as Grupo) : null;
+    const base: Base = {
+      tipo: "invitado",
+      titulo: nombreCompleto(invitado),
+      grupo: grupo?.nombre ?? null,
+      lugares: null,
+      integrantes: [],
+      presente: !!invitado.ingreso,
+      token: invitado.token,
+    };
+    if (!invitado.ingreso) return vistaSinMesas(base);
+
     const mesaIds = invitado.mesaId ? [invitado.mesaId] : (grupo?.mesaIds ?? []);
     const [mesas, indice] = await Promise.all([
       obtenerMesas(),
       invitado.mesaId ? indiceSilla(doc.id, invitado.mesaId) : Promise.resolve(-1),
     ]);
     return armarVista(
-      { tipo: "invitado", titulo: nombreCompleto(invitado), grupo: grupo?.nombre ?? null, lugares: null, integrantes: [] },
+      base,
       mesas,
       mesaIds,
       invitado.mesaId && indice >= 0 ? { mesaId: invitado.mesaId, indice } : null,
