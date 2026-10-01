@@ -54,7 +54,8 @@ export async function registrarIngreso(qr: string): Promise<ResultadoIngreso> {
         const snap = await tx.get(ref);
         const datos = snap.data() as Invitado;
         const momento = new Date().toISOString();
-        if (!datos.ingreso) tx.update(ref, { ingreso: momento });
+        // Si ingresó, asistió: se confirma aunque no hubiera respondido antes.
+        if (!datos.ingreso) tx.update(ref, { ingreso: momento, asistencia: "confirmado" });
         return { invitado: datos, previo: datos.ingreso ?? null, ahora: momento };
       });
       const grupo = invitado.grupoId ? await db.doc(`grupos/${invitado.grupoId}`).get() : null;

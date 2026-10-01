@@ -136,12 +136,14 @@ export default function PaginaInvitados() {
                   <td className="px-4 py-3 text-foreground/70">{grupoPorId.get(i.grupoId ?? "")?.nombre ?? "—"}</td>
                   <td className="px-4 py-3">{mesasDe(i) || <span className="text-foreground/40">Sin asignar</span>}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COLOR_ASISTENCIA[i.asistencia]}`}>
-                      {ETIQUETAS_ASISTENCIA[i.asistencia]}
-                    </span>
-                    {i.ingreso && (
-                      <span className="mt-1 block text-xs font-medium text-green-700 dark:text-green-400">
+                    {/* Si ya ingresó se muestra eso en lugar de la asistencia (que queda "Confirmado"). */}
+                    {i.ingreso ? (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COLOR_ASISTENCIA.confirmado}`}>
                         ✓ Ingresó {horaArgentina(i.ingreso)}
+                      </span>
+                    ) : (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COLOR_ASISTENCIA[i.asistencia]}`}>
+                        {ETIQUETAS_ASISTENCIA[i.asistencia]}
                       </span>
                     )}
                   </td>
