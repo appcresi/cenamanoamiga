@@ -1,7 +1,11 @@
 "use client";
 
+import { doc, getDoc } from "firebase/firestore";
 import { QRCodeCanvas } from "qrcode.react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { db } from "@/lib/firebase/cliente";
+import { EVENTO_POR_DEFECTO, type Evento } from "@/lib/tipos";
+import { armarMensajeWhatsapp } from "@/lib/utilidades";
 import { Boton, Modal } from "./ui";
 
 export function ModalCompartir({
@@ -17,8 +21,18 @@ export function ModalCompartir({
 }) {
   const lienzo = useRef<HTMLCanvasElement>(null);
   const [copiado, setCopiado] = useState(false);
+  const [plantilla, setPlantilla] = useState(EVENTO_POR_DEFECTO.mensajeWhatsapp);
   const link = `${window.location.origin}/invitacion/${token}`;
-  const mensaje = `¡Hola! Te compartimos tu invitación a la Cena de Beneficio del Colegio Mano Amiga Santa María. Acá podés ver tu mesa y los datos del evento: ${link}`;
+  const mensaje = armarMensajeWhatsapp(plantilla, nombre, link);
+
+  useEffect(() => {
+    getDoc(doc(db(), "evento", "principal"))
+      .then((snap) => {
+        const guardada = (snap.data() as Partial<Evento> | undefined)?.mensajeWhatsapp;
+        if (guardada?.trim()) setPlantilla(guardada);
+      })
+      .catch(() => {});
+  }, []);
   const numero = (telefono ?? "").replace(/\D/g, "");
 
   async function copiar() {

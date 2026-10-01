@@ -38,3 +38,9 @@ export function nombreCompleto(i: { nombre: string; apellido: string }): string 
 export function nombreMesa(m: { numero: number; nombre: string }): string {
   return m.nombre ? `Mesa ${m.numero} · ${m.nombre}` : `Mesa ${m.numero}`;
 }
+
+/** Completa {nombre} y {link} en la plantilla; si la plantilla no tiene {link}, lo agrega al final. */
+export function armarMensajeWhatsapp(plantilla: string, nombre: string, link: string): string {
+  const texto = plantilla.replaceAll("{nombre}", nombre).trim();
+  return plantilla.includes("{link}") ? texto.replaceAll("{link}", link) : `${texto} ${link}`.trim();
+}

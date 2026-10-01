@@ -55,6 +55,20 @@ export default function PaginaEvento() {
           onChange={(e) => cambiar("mapa", e.target.value)}
         />
         <AreaTexto etiqueta="Información adicional" rows={5} className="sm:col-span-2" placeholder="Programa, estacionamiento, contacto, etc." value={evento.informacion} onChange={(e) => cambiar("informacion", e.target.value)} />
+        <div className="sm:col-span-2">
+          <AreaTexto
+            etiqueta="Mensaje de WhatsApp"
+            rows={4}
+            placeholder={EVENTO_POR_DEFECTO.mensajeWhatsapp}
+            value={evento.mensajeWhatsapp}
+            onChange={(e) => cambiar("mensajeWhatsapp", e.target.value)}
+          />
+          <p className="mt-1.5 text-xs text-foreground/60">
+            Es el texto que se envía con el botón «Enviar por WhatsApp». Usá {"{nombre}"} para el nombre del invitado
+            u organización y {"{link}"} para su invitación (si no lo ponés, el link se agrega al final). Si lo dejás
+            vacío se usa el mensaje original.
+          </p>
+        </div>
         <div className="flex items-center justify-end gap-3 sm:col-span-2">
           {estado === "guardado" && <span className="text-sm text-green-700 dark:text-green-400">Guardado ✓</span>}
           {estado === "error" && <span className="text-sm text-peligro">No se pudo guardar</span>}

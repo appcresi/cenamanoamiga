@@ -13,6 +13,8 @@ export interface Evento {
   informacion: string;
   /** Link de Google Maps con la ubicación exacta (opcional; si falta se busca lugar + dirección). */
   mapa: string;
+  /** Mensaje para enviar la invitación por WhatsApp. Admite {nombre} y {link}. */
+  mensajeWhatsapp: string;
 }
 
 export interface Mesa {
@@ -84,6 +86,8 @@ export const EVENTO_POR_DEFECTO: Evento = {
   vestimenta: "",
   informacion: "",
   mapa: "",
+  mensajeWhatsapp:
+    "¡Hola {nombre}! Te compartimos tu invitación a la Cena de Beneficio del Colegio Mano Amiga Santa María. Acá podés ver tu mesa y los datos del evento: {link}",
 };
 
 export const ETIQUETAS_TIPO_GRUPO: Record<TipoGrupo, string> = {
