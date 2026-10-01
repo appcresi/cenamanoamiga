@@ -69,6 +69,26 @@ export default function PaginaEvento() {
             vacío se usa el mensaje original.
           </p>
         </div>
+        <Campo
+          etiqueta="Asunto del mail"
+          className="sm:col-span-2"
+          placeholder={EVENTO_POR_DEFECTO.asuntoMail}
+          value={evento.asuntoMail}
+          onChange={(e) => cambiar("asuntoMail", e.target.value)}
+        />
+        <div className="sm:col-span-2">
+          <AreaTexto
+            etiqueta="Mensaje del mail"
+            rows={7}
+            placeholder={EVENTO_POR_DEFECTO.mensajeMail}
+            value={evento.mensajeMail}
+            onChange={(e) => cambiar("mensajeMail", e.target.value)}
+          />
+          <p className="mt-1.5 text-xs text-foreground/60">
+            Es el texto del botón «Enviar por mail», que abre el programa de correo con el mail listo para enviar.
+            Funciona igual que el de WhatsApp: {"{nombre}"}, {"{link}"} y, si lo dejás vacío, el mensaje original.
+          </p>
+        </div>
         <label className="flex items-start gap-3 rounded-lg border border-borde p-3 text-sm sm:col-span-2">
           <input
             type="checkbox"

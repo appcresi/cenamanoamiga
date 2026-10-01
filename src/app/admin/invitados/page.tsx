@@ -183,6 +183,7 @@ export default function PaginaInvitados() {
           nombre={nombreCompleto(compartiendo)}
           token={compartiendo.token}
           telefono={compartiendo.telefono}
+          email={compartiendo.email}
           alCerrar={() => setCompartiendo(null)}
         />
       )}

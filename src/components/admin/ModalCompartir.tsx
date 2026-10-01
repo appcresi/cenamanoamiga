@@ -5,31 +5,43 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { db } from "@/lib/firebase/cliente";
 import { EVENTO_POR_DEFECTO, type Evento } from "@/lib/tipos";
-import { armarMensajeWhatsapp } from "@/lib/utilidades";
+import { armarMensaje } from "@/lib/utilidades";
 import { Boton, Modal } from "./ui";
+
+type Plantillas = Pick<Evento, "mensajeWhatsapp" | "asuntoMail" | "mensajeMail">;
 
 export function ModalCompartir({
   nombre,
   token,
   telefono,
+  email,
   alCerrar,
 }: {
   nombre: string;
   token: string;
   telefono?: string;
+  email?: string;
   alCerrar: () => void;
 }) {
   const lienzo = useRef<HTMLCanvasElement>(null);
   const [copiado, setCopiado] = useState(false);
-  const [plantilla, setPlantilla] = useState(EVENTO_POR_DEFECTO.mensajeWhatsapp);
+  const [plantillas, setPlantillas] = useState<Plantillas>(EVENTO_POR_DEFECTO);
   const link = `${window.location.origin}/invitacion/${token}`;
-  const mensaje = armarMensajeWhatsapp(plantilla, nombre, link);
+  const mensaje = armarMensaje(plantillas.mensajeWhatsapp, nombre, link);
+  const asuntoMail = plantillas.asuntoMail.replaceAll("{nombre}", nombre).replaceAll("{link}", link);
+  const mensajeMail = armarMensaje(plantillas.mensajeMail, nombre, link);
 
   useEffect(() => {
     getDoc(doc(db(), "evento", "principal"))
       .then((snap) => {
-        const guardada = (snap.data() as Partial<Evento> | undefined)?.mensajeWhatsapp;
-        if (guardada?.trim()) setPlantilla(guardada);
+        const guardado = (snap.data() as Partial<Evento> | undefined) ?? {};
+        // Un campo vacío o que no existe usa el texto por defecto.
+        const elegir = (campo: keyof Plantillas) => guardado[campo]?.trim() || EVENTO_POR_DEFECTO[campo];
+        setPlantillas({
+          mensajeWhatsapp: elegir("mensajeWhatsapp"),
+          asuntoMail: elegir("asuntoMail"),
+          mensajeMail: elegir("mensajeMail"),
+        });
       })
       .catch(() => {});
   }, []);
@@ -65,6 +77,12 @@ export function ModalCompartir({
             className="rounded-lg border border-borde bg-superficie px-4 py-2 text-sm font-medium hover:bg-primario-claro"
           >
             Enviar por WhatsApp
+          </a>
+          <a
+            href={`mailto:${encodeURI(email?.trim() ?? "")}?subject=${encodeURIComponent(asuntoMail)}&body=${encodeURIComponent(mensajeMail)}`}
+            className="rounded-lg border border-borde bg-superficie px-4 py-2 text-sm font-medium hover:bg-primario-claro"
+          >
+            Enviar por mail
           </a>
         </div>
       </div>

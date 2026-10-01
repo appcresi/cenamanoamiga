@@ -161,6 +161,7 @@ export default function PaginaGrupos() {
           nombre={compartiendo.nombre}
           token={compartiendo.token}
           telefono={compartiendo.telefono}
+          email={compartiendo.email}
           alCerrar={() => setCompartiendo(null)}
         />
       )}
