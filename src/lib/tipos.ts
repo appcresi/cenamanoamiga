@@ -15,6 +15,8 @@ export interface Evento {
   mapa: string;
   /** Mensaje para enviar la invitación por WhatsApp. Admite {nombre} y {link}. */
   mensajeWhatsapp: string;
+  /** Activa el botón "Registrar ingreso con QR" del inicio y el registro de ingreso. */
+  ingresoHabilitado: boolean;
 }
 
 export interface Mesa {
@@ -47,8 +49,6 @@ export interface Invitado {
   id: string;
   nombre: string;
   apellido: string;
-  /** Solo dígitos (ver `normalizarDni`). Puede estar vacío. */
-  dni: string;
   email: string;
   telefono: string;
   grupoId: string | null;
@@ -88,6 +88,7 @@ export const EVENTO_POR_DEFECTO: Evento = {
   mapa: "",
   mensajeWhatsapp:
     "¡Hola {nombre}! Te compartimos tu invitación a la Cena de Beneficio del Colegio Mano Amiga Santa María. Acá podés ver tu mesa y los datos del evento: {link}",
+  ingresoHabilitado: false,
 };
 
 export const ETIQUETAS_TIPO_GRUPO: Record<TipoGrupo, string> = {

@@ -7,7 +7,7 @@ export default function OrganizacionNoEncontrada() {
       <Encabezado titulo="Organización no encontrada" />
       <p className="text-foreground/70">
         No encontramos esa organización. Volvé a buscarla por su nombre o buscá tu mesa con tu
-        DNI.
+        nombre.
       </p>
       <Link href="/" className="rounded-lg bg-primario-fondo px-5 py-3 font-medium text-white">
         Volver a buscar

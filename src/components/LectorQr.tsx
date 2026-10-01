@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { registrarIngreso, type ResultadoIngreso } from "@/app/ingreso/acciones";
-import { TEXTO_INICIO_INGRESO } from "@/lib/ingreso";
-import { useIngresoHabilitado } from "./useIngresoHabilitado";
+import { buscarParaIngreso, registrarIngreso, type ResultadoIngreso } from "@/app/ingreso/acciones";
 
 // API nativa de lectura de códigos (Chrome en Android). No está en los tipos de TypeScript.
 interface Detector {
@@ -43,20 +41,20 @@ async function crearDecodificador(): Promise<Decodificador> {
 const mesasTexto = (mesas: number[]) =>
   mesas.length ? `${mesas.length > 1 ? "Mesas" : "Mesa"} ${mesas.join(" y ").replace(/ y (?=.* y )/g, ", ")}` : "Mesa a confirmar";
 
-export function LectorQr() {
-  const habilitado = useIngresoHabilitado();
+export function LectorQr({ habilitado }: { habilitado: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const ocupado = useRef(false);
   const ultimo = useRef<{ texto: string; momento: number } | null>(null);
   const [camara, setCamara] = useState<"iniciando" | "activa" | "sin_permiso" | "no_disponible">("iniciando");
   const [resultado, setResultado] = useState<ResultadoIngreso | null>(null);
   const [procesando, setProcesando] = useState(false);
-  const [dni, setDni] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [encontrados, setEncontrados] = useState<{ token: string; nombre: string }[] | null>(null);
 
-  const procesar = useCallback(async (entrada: { qr?: string; dni?: string }) => {
+  const procesar = useCallback(async (qr: string) => {
     ocupado.current = true;
     setProcesando(true);
-    const r = await registrarIngreso(entrada);
+    const r = await registrarIngreso(qr);
     setResultado(r);
     setProcesando(false);
     // El navegador solo permite vibrar después de que la persona tocó la pantalla.
@@ -99,7 +97,7 @@ export function LectorQr() {
           const repetido = texto && ultimo.current?.texto === texto && Date.now() - ultimo.current.momento < 4000;
           if (texto && !repetido) {
             ultimo.current = { texto, momento: Date.now() };
-            await procesar({ qr: texto });
+            await procesar(texto);
           }
         }
         temporizador = setTimeout(ciclo, 200);
@@ -114,11 +112,18 @@ export function LectorQr() {
     };
   }, [habilitado, procesar]);
 
-  function buscarDni(e: FormEvent) {
+  async function buscarNombre(e: FormEvent) {
     e.preventDefault();
-    if (!dni.trim()) return;
-    procesar({ dni });
-    setDni("");
+    if (nombre.trim().length < 3) return;
+    setProcesando(true);
+    setEncontrados(await buscarParaIngreso(nombre).catch(() => []));
+    setProcesando(false);
+  }
+
+  function elegir(token: string) {
+    setEncontrados(null);
+    setNombre("");
+    procesar(token);
   }
 
   return (
@@ -132,7 +137,7 @@ export function LectorQr() {
 
       {!habilitado ? (
         <p className="mt-10 animate-aparecer rounded-2xl bg-white/10 p-6 text-center">
-          El registro de ingreso se habilita el <strong>{TEXTO_INICIO_INGRESO}</strong>.
+          El registro de ingreso todavía no está habilitado.
         </p>
       ) : (
         <>
@@ -143,8 +148,8 @@ export function LectorQr() {
             {camara !== "activa" && (
               <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-white/80">
                 {camara === "iniciando" && "Abriendo la cámara…"}
-                {camara === "sin_permiso" && "No hay permiso para usar la cámara. Habilitalo en el navegador o ingresá el DNI abajo."}
-                {camara === "no_disponible" && "Este navegador no permite usar la cámara. Ingresá el DNI abajo."}
+                {camara === "sin_permiso" && "No hay permiso para usar la cámara. Habilitalo en el navegador o buscá por nombre abajo."}
+                {camara === "no_disponible" && "Este navegador no permite usar la cámara. Buscá por nombre abajo."}
               </p>
             )}
             {procesando && (
@@ -156,17 +161,39 @@ export function LectorQr() {
 
           {resultado && <Resultado key={JSON.stringify(resultado)} r={resultado} />}
 
-          <form onSubmit={buscarDni} className="mt-auto flex gap-2">
-            <label htmlFor="dni-ingreso" className="sr-only">
-              DNI del invitado
+          {encontrados && (
+            <section className="flex animate-aparecer flex-col gap-2">
+              {encontrados.length ? (
+                <>
+                  <p className="text-sm text-white/70">Tocá el invitado para registrar su ingreso:</p>
+                  {encontrados.map((i) => (
+                    <button
+                      key={i.token}
+                      type="button"
+                      disabled={procesando}
+                      onClick={() => elegir(i.token)}
+                      className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-left font-medium transition active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {i.nombre}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <p className="text-sm text-white/70">No hay invitados con ese nombre.</p>
+              )}
+            </section>
+          )}
+
+          <form onSubmit={buscarNombre} className="mt-auto flex gap-2">
+            <label htmlFor="nombre-ingreso" className="sr-only">
+              Nombre o apellido del invitado
             </label>
             <input
-              id="dni-ingreso"
-              inputMode="numeric"
+              id="nombre-ingreso"
               autoComplete="off"
-              placeholder="¿Sin QR? Ingresá el DNI"
-              value={dni}
-              onChange={(e) => setDni(e.target.value)}
+              placeholder="¿Sin QR? Buscá por nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               className="min-w-0 flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none placeholder:text-white/50 focus:border-white/60"
             />
             <button
@@ -174,7 +201,7 @@ export function LectorQr() {
               disabled={procesando}
               className="rounded-lg bg-acento px-5 py-3 font-medium text-white transition active:scale-[0.97] disabled:opacity-60"
             >
-              Registrar
+              Buscar
             </button>
           </form>
         </>

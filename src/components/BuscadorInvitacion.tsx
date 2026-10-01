@@ -12,7 +12,7 @@ export function BuscadorInvitacion() {
   return (
     <form action={accion} className="flex w-full flex-col gap-2.5">
       <label htmlFor="consulta" className="sr-only">
-        DNI, nombre y apellido u organización
+        Tu nombre, apellido u organización
       </label>
       <div className="flex gap-2">
         <input
@@ -20,7 +20,7 @@ export function BuscadorInvitacion() {
           name="consulta"
           autoComplete="off"
           required
-          placeholder="DNI, nombre u organización"
+          placeholder="Nombre, apellido u organización"
           className="min-w-0 flex-1 rounded-lg border border-borde bg-superficie px-4 py-3 text-base outline-none transition-shadow focus:border-primario focus:ring-4 focus:ring-primario/15"
         />
         <button
@@ -33,7 +33,7 @@ export function BuscadorInvitacion() {
         </button>
       </div>
       <p className="text-xs text-foreground/60">
-        Buscá tu mesa con tu DNI, tu nombre y apellido o el nombre de tu empresa, fundación,
+        Buscá tu mesa con tu nombre, tu apellido o el nombre de tu empresa, fundación,
         asociación o banco. ¿Tenés un link o QR? Abrilo directamente.
       </p>
       {estado.error && (

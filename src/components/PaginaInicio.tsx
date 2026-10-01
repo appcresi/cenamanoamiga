@@ -29,7 +29,7 @@ export function PaginaInicio({ evento, solapa = "invitados" }: { evento: Evento;
         <SolapasAcceso inicial={solapa} invitados={<BuscadorInvitacion />} organizadores={<IngresoGoogle />} />
       </section>
       <div className="w-full animate-aparecer" style={{ animationDelay: "300ms" }}>
-        <BotonIngreso />
+        <BotonIngreso habilitado={evento.ingresoHabilitado} />
       </div>
       <footer className="mt-auto flex animate-aparecer flex-col items-center gap-1" style={{ animationDelay: "350ms" }}>
         <Link href="/terminos" className="text-sm text-white/75 hover:text-white">

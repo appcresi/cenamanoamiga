@@ -1,6 +1,6 @@
 "use client";
 
-import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, deleteField, doc, updateDoc } from "firebase/firestore";
 import { useMemo, useState, type FormEvent } from "react";
 import { BotonImprimir, EncabezadoImpresion, PieImpresion } from "@/components/admin/Impresion";
 import { ModalCompartir } from "@/components/admin/ModalCompartir";
@@ -9,14 +9,13 @@ import { db } from "@/lib/firebase/cliente";
 import { useColeccion } from "@/lib/firebase/useColeccion";
 import { ETIQUETAS_ASISTENCIA, type Asistencia, type Grupo, type Invitado, type Mesa } from "@/lib/tipos";
 import { horaArgentina } from "@/lib/ingreso";
-import { generarToken, nombreCompleto, nombreMesa, normalizarDni } from "@/lib/utilidades";
+import { generarToken, nombreCompleto, nombreMesa } from "@/lib/utilidades";
 
 type Borrador = Omit<Invitado, "id" | "token">;
 
 const VACIO: Borrador = {
   nombre: "",
   apellido: "",
-  dni: "",
   email: "",
   telefono: "",
   grupoId: null,
@@ -61,7 +60,6 @@ export default function PaginaInvitados() {
         (i) =>
           !q ||
           nombreCompleto(i).toLowerCase().includes(q) ||
-          i.dni.includes(normalizarDni(q) || "∅") ||
           (grupoPorId.get(i.grupoId ?? "")?.nombre.toLowerCase().includes(q) ?? false),
       )
       .sort((a, b) => a.apellido.localeCompare(b.apellido) || a.nombre.localeCompare(b.nombre));
@@ -96,7 +94,7 @@ export default function PaginaInvitados() {
       <EncabezadoImpresion titulo="Listado de invitados" detalle={detalleImpresion} />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3 print:hidden">
-        <Campo etiqueta="Buscar" placeholder="Nombre, DNI u organización" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        <Campo etiqueta="Buscar" placeholder="Nombre u organización" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
         <Selector etiqueta="Organización / grupo" value={filtroGrupo} onChange={(e) => setFiltroGrupo(e.target.value)}>
           <option value="">Todos</option>
           <option value="ninguno">Sin grupo</option>
@@ -124,7 +122,6 @@ export default function PaginaInvitados() {
             <thead className="border-b border-borde bg-background text-foreground/60">
               <tr>
                 <th className="px-4 py-3 font-medium">Nombre</th>
-                <th className="px-4 py-3 font-medium">DNI</th>
                 <th className="px-4 py-3 font-medium">Organización / grupo</th>
                 <th className="px-4 py-3 font-medium">Mesa</th>
                 <th className="px-4 py-3 font-medium">Asistencia</th>
@@ -136,7 +133,6 @@ export default function PaginaInvitados() {
               {visibles.map((i) => (
                 <tr key={i.id} className="border-b border-borde last:border-0 print:break-inside-avoid">
                   <td className="px-4 py-3 font-medium">{nombreCompleto(i)}</td>
-                  <td className="px-4 py-3 text-foreground/70">{i.dni || "—"}</td>
                   <td className="px-4 py-3 text-foreground/70">{grupoPorId.get(i.grupoId ?? "")?.nombre ?? "—"}</td>
                   <td className="px-4 py-3">{mesasDe(i) || <span className="text-foreground/40">Sin asignar</span>}</td>
                   <td className="px-4 py-3">
@@ -209,7 +205,8 @@ function FormularioInvitado({
 }) {
   const [datos, setDatos] = useState<Borrador>(() => {
     if (!invitado) return VACIO;
-    const { id: _id, token: _token, ...resto } = invitado;
+    // Los invitados cargados antes pueden tener `dni`: no se vuelve a guardar.
+    const { id: _id, token: _token, dni: _dni, ...resto } = invitado as Invitado & { dni?: string };
     return { ...VACIO, ...resto };
   });
   const [guardando, setGuardando] = useState(false);
@@ -228,17 +225,11 @@ function FormularioInvitado({
 
   async function guardar(e: FormEvent) {
     e.preventDefault();
-    const dni = normalizarDni(datos.dni);
-    const repetido = dni && invitados.find((i) => i.dni === dni && i.id !== invitado?.id);
-    if (repetido) {
-      setError(`Ya existe un invitado con ese DNI: ${nombreCompleto(repetido)}.`);
-      return;
-    }
     setGuardando(true);
-    const registro = { ...datos, nombre: datos.nombre.trim(), apellido: datos.apellido.trim(), dni };
+    const registro = { ...datos, nombre: datos.nombre.trim(), apellido: datos.apellido.trim() };
     try {
       if (invitado) {
-        await updateDoc(doc(db(), "invitados", invitado.id), registro);
+        await updateDoc(doc(db(), "invitados", invitado.id), { ...registro, dni: deleteField() });
       } else {
         await addDoc(collection(db(), "invitados"), { ...registro, token: generarToken() });
       }
@@ -254,9 +245,8 @@ function FormularioInvitado({
       <form onSubmit={guardar} className="grid gap-4 sm:grid-cols-2">
         <Campo etiqueta="Nombre *" required value={datos.nombre} onChange={(e) => cambiar("nombre", e.target.value)} />
         <Campo etiqueta="Apellido" value={datos.apellido} onChange={(e) => cambiar("apellido", e.target.value)} />
-        <Campo etiqueta="DNI" inputMode="numeric" value={datos.dni} onChange={(e) => cambiar("dni", e.target.value)} />
         <Campo etiqueta="Teléfono" type="tel" value={datos.telefono} onChange={(e) => cambiar("telefono", e.target.value)} />
-        <Campo etiqueta="Email" type="email" className="sm:col-span-2" value={datos.email} onChange={(e) => cambiar("email", e.target.value)} />
+        <Campo etiqueta="Email" type="email" value={datos.email} onChange={(e) => cambiar("email", e.target.value)} />
         <Selector etiqueta="Organización / grupo" value={datos.grupoId ?? ""} onChange={(e) => cambiar("grupoId", e.target.value || null)}>
           <option value="">Ninguno</option>
           {grupos.map((g) => (

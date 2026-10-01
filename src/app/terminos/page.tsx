@@ -77,7 +77,7 @@ export default function Terminos() {
       <Seccion id="usuarios" titulo={SECCIONES[1].titulo}>
         <p>
           <strong>Invitados:</strong> acceden sin registrarse, mediante un link o código QR personal,
-          su DNI o el nombre de la organización por la que asisten.
+          su nombre o el de la organización por la que asisten.
         </p>
         <p>
           <strong>Organizadores:</strong> personas autorizadas por la Fundación que ingresan con su
@@ -89,7 +89,7 @@ export default function Terminos() {
       <Seccion id="uso" titulo={SECCIONES[2].titulo}>
         <p>La Plataforma debe usarse solo para fines relacionados con el evento. No está permitido:</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>consultar la información de otras personas sin su autorización, por ejemplo, buscando DNI ajenos;</li>
+          <li>consultar la información de otras personas sin su autorización, por ejemplo, buscando nombres ajenos;</li>
           <li>intentar acceder a secciones o datos para los que no se tiene permiso;</li>
           <li>realizar consultas masivas o automatizadas, o afectar el funcionamiento de la Plataforma;</li>
           <li>usar la información obtenida para fines comerciales, publicitarios o ajenos al evento.</li>
@@ -136,7 +136,7 @@ export default function Terminos() {
           invitados del evento.
         </p>
         <p>
-          <strong>Datos que tratamos:</strong> nombre y apellido, DNI, email, teléfono, organización
+          <strong>Datos que tratamos:</strong> nombre y apellido, email, teléfono, organización
           por la que asistís, mesa asignada, confirmación de asistencia, hora de ingreso el día del evento y notas
           internas de organización. Los organizadores además ingresan con su email de Google.
         </p>

@@ -9,7 +9,7 @@ import {
   type Mesa,
   type VistaInvitacion,
 } from "@/lib/tipos";
-import { nombreCompleto, normalizarDni, normalizarTexto } from "@/lib/utilidades";
+import { nombreCompleto, normalizarTexto } from "@/lib/utilidades";
 
 export async function obtenerEvento(): Promise<Evento> {
   try {
@@ -152,12 +152,4 @@ export async function buscarInvitados(texto: string): Promise<{ token: string; n
     .map((i) => ({ token: i.token, nombre: nombreCompleto(i) }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
     .slice(0, 8);
-}
-
-/** Devuelve el token del invitado con ese DNI, o null. */
-export async function tokenPorDni(dni: string): Promise<string | null> {
-  const limpio = normalizarDni(dni);
-  if (limpio.length < 6) return null;
-  const snap = await adminDb().collection("invitados").where("dni", "==", limpio).limit(1).get();
-  return snap.empty ? null : (snap.docs[0].data() as Invitado).token;
 }

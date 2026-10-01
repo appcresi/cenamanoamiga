@@ -69,6 +69,21 @@ export default function PaginaEvento() {
             vacío se usa el mensaje original.
           </p>
         </div>
+        <label className="flex items-start gap-3 rounded-lg border border-borde p-3 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4"
+            checked={evento.ingresoHabilitado}
+            onChange={(e) => cambiar("ingresoHabilitado", e.target.checked)}
+          />
+          <span>
+            <span className="font-medium">Habilitar registro de ingreso con QR</span>
+            <span className="block text-xs text-foreground/60">
+              Activa el botón «Registrar ingreso con QR» del inicio para escanear invitaciones y marcar presentes. Dejalo
+              desactivado hasta el día del evento.
+            </span>
+          </span>
+        </label>
         <div className="flex items-center justify-end gap-3 sm:col-span-2">
           {estado === "guardado" && <span className="text-sm text-green-700 dark:text-green-400">Guardado ✓</span>}
           {estado === "error" && <span className="text-sm text-peligro">No se pudo guardar</span>}

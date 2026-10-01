@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { buscarInvitados, buscarOrganizaciones, tokenPorDni } from "@/lib/consultas";
+import { buscarInvitados, buscarOrganizaciones } from "@/lib/consultas";
 
 export interface EstadoBusqueda {
   error: string | null;
@@ -14,30 +14,12 @@ const ERROR_TECNICO: EstadoBusqueda = {
   opciones: [],
 };
 
-/** Si parece un DNI (solo números, puntos o espacios) busca por DNI; si no, por nombre de invitado u organización. */
+/** Busca por nombre de invitado o de organización. */
 export async function buscarInvitacion(
   _anterior: EstadoBusqueda,
   formData: FormData,
 ): Promise<EstadoBusqueda> {
   const consulta = String(formData.get("consulta") ?? "").trim();
-
-  if (/^[\d.\s-]+$/.test(consulta)) {
-    let token: string | null;
-    try {
-      token = await tokenPorDni(consulta);
-    } catch (error) {
-      console.error("Error buscando por DNI:", error);
-      return ERROR_TECNICO;
-    }
-    if (!token) {
-      return {
-        error:
-          "No encontramos una invitación con ese DNI. Si venís por una organización, buscá por su nombre.",
-        opciones: [],
-      };
-    }
-    redirect(`/invitacion/${token}`);
-  }
 
   if (consulta.length < 3) {
     return { error: "Escribí al menos 3 letras de tu nombre o de la organización.", opciones: [] };
@@ -60,7 +42,7 @@ export async function buscarInvitacion(
   if (!opciones.length) {
     return {
       error:
-        "No encontramos ese nombre. Probá con tu nombre y apellido, el nombre de tu organización o tu DNI.",
+        "No encontramos ese nombre. Probá con tu nombre, tu apellido o el nombre de tu organización.",
       opciones: [],
     };
   }

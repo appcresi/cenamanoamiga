@@ -6,11 +6,6 @@ export function generarToken(largo = 12): string {
   return Array.from(bytes, (b) => ALFABETO[b % ALFABETO.length]).join("");
 }
 
-/** Deja solo los dígitos: "30.123.456" → "30123456". */
-export function normalizarDni(dni: string): string {
-  return dni.replace(/\D/g, "");
-}
-
 /** Minúsculas, sin acentos ni espacios repetidos: "Fundación  X" → "fundacion x". */
 export function normalizarTexto(texto: string): string {
   return texto
