@@ -21,8 +21,28 @@ export async function obtenerEvento(): Promise<Evento> {
   }
 }
 
+// Las colecciones que se leen completas se guardan un rato en memoria del servidor:
+// sin esto cada búsqueda lee todos los invitados y agota la cuota diaria de Firestore.
+// Lo que se cambia en el panel tarda hasta un minuto en verse en la búsqueda y el plano.
+const DURACION_CACHE = 60_000;
+
+function enMemoria<T>(cargar: () => Promise<T>): () => Promise<T> {
+  let actual: { promesa: Promise<T>; vence: number } | null = null;
+  return () => {
+    if (!actual || Date.now() > actual.vence) {
+      const promesa = cargar();
+      actual = { promesa, vence: Date.now() + DURACION_CACHE };
+      // Si falla, no se guarda el error: el próximo pedido vuelve a intentar.
+      promesa.catch(() => {
+        if (actual?.promesa === promesa) actual = null;
+      });
+    }
+    return actual.promesa;
+  };
+}
+
 /** Todas las mesas ordenadas por número, con lo justo para dibujar el plano. */
-async function obtenerMesas(): Promise<VistaInvitacion["plano"]["mesas"]> {
+const obtenerMesas = enMemoria(async (): Promise<VistaInvitacion["plano"]["mesas"]> => {
   const snap = await adminDb().collection("mesas").get();
   return snap.docs
     .map((d) => {
@@ -36,7 +56,26 @@ async function obtenerMesas(): Promise<VistaInvitacion["plano"]["mesas"]> {
       };
     })
     .sort((a, b) => a.numero - b.numero);
-}
+});
+
+/** Organizaciones que aparecen en la búsqueda (las particulares no). */
+const organizacionesBuscables = enMemoria(async () => {
+  const snap = await adminDb().collection("grupos").get();
+  return snap.docs
+    .map((d) => ({ ...(d.data() as Grupo), id: d.id }))
+    .filter((g) => g.tipo !== "particular")
+    .map((g) => ({ id: g.id, nombre: g.nombre, clave: normalizarTexto(g.nombre) }));
+});
+
+/** Invitados con su nombre ya separado en palabras normalizadas para buscar. */
+const invitadosBuscables = enMemoria(async () => {
+  const snap = await adminDb().collection("invitados").get();
+  return snap.docs.map((d) => {
+    const i = d.data() as Invitado;
+    const nombre = nombreCompleto(i);
+    return { token: i.token, nombre, palabras: normalizarTexto(nombre).split(" ") };
+  });
+});
 
 type Base = Omit<VistaInvitacion, "mesas" | "plano">;
 
@@ -145,10 +184,8 @@ export async function buscarOrganizacion(id: string): Promise<VistaInvitacion | 
 export async function buscarOrganizaciones(texto: string): Promise<{ id: string; nombre: string }[]> {
   const buscado = normalizarTexto(texto);
   if (buscado.length < 3) return [];
-  const snap = await adminDb().collection("grupos").get();
-  return snap.docs
-    .map((d) => ({ ...(d.data() as Grupo), id: d.id }))
-    .filter((g) => g.tipo !== "particular" && normalizarTexto(g.nombre).includes(buscado))
+  return (await organizacionesBuscables())
+    .filter((g) => g.clave.includes(buscado))
     .map((g) => ({ id: g.id, nombre: g.nombre }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
     .slice(0, 8);
@@ -161,14 +198,9 @@ export async function buscarOrganizaciones(texto: string): Promise<{ id: string;
 export async function buscarInvitados(texto: string): Promise<{ token: string; nombre: string }[]> {
   const palabras = normalizarTexto(texto).split(" ").filter(Boolean);
   if (!palabras.length) return [];
-  const snap = await adminDb().collection("invitados").get();
-  return snap.docs
-    .map((d) => d.data() as Invitado)
-    .filter((i) => {
-      const propias = normalizarTexto(nombreCompleto(i)).split(" ");
-      return palabras.every((p) => propias.some((w) => w.startsWith(p)));
-    })
-    .map((i) => ({ token: i.token, nombre: nombreCompleto(i) }))
+  return (await invitadosBuscables())
+    .filter((i) => palabras.every((p) => i.palabras.some((w) => w.startsWith(p))))
+    .map((i) => ({ token: i.token, nombre: i.nombre }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
     .slice(0, 8);
 }
