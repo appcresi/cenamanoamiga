@@ -2,9 +2,9 @@
 
 import { doc, updateDoc, writeBatch } from "firebase/firestore";
 import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { CLASE_PLANO, FondoPlano, MesaDibujo, type Silla } from "@/components/MesaDibujo";
+import { ANCHO_MESA, CLASE_PLANO, FondoPlano, MesaDibujo, type Silla } from "@/components/MesaDibujo";
 import { db } from "@/lib/firebase/cliente";
-import { limitar, ordenarSentados, posicionDe, posicionesEnGrilla, redondear, type Posicion } from "@/lib/plano";
+import { formaDe, limitar, ordenarSentados, PLANO_SALON, posicionDe, posicionesEnGrilla, redondear, type Posicion } from "@/lib/plano";
 import type { Grupo, Invitado, Mesa } from "@/lib/tipos";
 import { nombreCompleto, nombreMesa } from "@/lib/utilidades";
 import { Boton } from "./ui";
@@ -94,10 +94,15 @@ export function PlanoSalon({
     guardarPosicion(m.id, { x: limitar(p.x + d[0]), y: limitar(p.y + d[1]) });
   }
 
-  async function acomodarEnGrilla() {
-    if (!confirm("¿Acomodar todas las mesas en una grilla? Se pierde la distribución actual.")) return;
+  // Las mesas que figuran en el plano del salón vuelven a su lugar; el resto, a la grilla.
+  async function ubicarSegunPlano() {
+    if (!confirm("¿Ubicar todas las mesas según el plano del salón? Se pierde la distribución actual.")) return;
     const lote = writeBatch(db());
-    for (const [id, p] of grilla) lote.update(doc(db(), "mesas", id), p);
+    for (const m of mesas) {
+      const enPlano = PLANO_SALON.get(m.numero);
+      const p = enPlano ? { x: enPlano.x, y: enPlano.y } : grilla.get(m.id);
+      if (p) lote.update(doc(db(), "mesas", m.id), p);
+    }
     await lote.commit();
   }
 
@@ -107,13 +112,13 @@ export function PlanoSalon({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-foreground/70">
         <p>Arrastrá las mesas para ubicarlas. Tocá una mesa para ver quiénes están sentados.</p>
-        <Boton variante="secundario" onClick={acomodarEnGrilla} disabled={!mesas.length}>
-          Acomodar en grilla
+        <Boton variante="secundario" onClick={ubicarSegunPlano} disabled={!mesas.length}>
+          Ubicar según el plano
         </Boton>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-borde bg-superficie">
-        <div ref={plano} className={`${CLASE_PLANO} min-w-[640px]`}>
+        <div ref={plano} className={`${CLASE_PLANO} min-w-[720px]`}>
           <FondoPlano />
 
           {mesas.map((m) => {
@@ -132,7 +137,7 @@ export function PlanoSalon({
                 }}
                 onKeyDown={(e) => alTeclear(e, m)}
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                className={`absolute aspect-square w-[12%] min-w-24 -translate-x-1/2 -translate-y-1/2 touch-none cursor-grab rounded-full outline-none active:cursor-grabbing ${moviendo?.id === m.id ? "z-10 drop-shadow-lg" : ""}`}
+                className={`absolute aspect-square ${ANCHO_MESA} -translate-x-1/2 -translate-y-1/2 touch-none cursor-grab rounded-full outline-none active:cursor-grabbing ${moviendo?.id === m.id ? "z-10 drop-shadow-lg" : ""}`}
               >
                 <MesaAdmin
                   mesa={m}
@@ -204,6 +209,7 @@ function MesaAdmin({
       sillas={sillas}
       estado={llena ? "llena" : reservada ? "reservada" : "normal"}
       activa={activa}
+      forma={formaDe(mesa.numero)}
     />
   );
 }
@@ -306,7 +312,7 @@ export function ImpresionUbicaciones({
               <div
                 key={m.id}
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                className="absolute aspect-square w-[12%] -translate-x-1/2 -translate-y-1/2"
+                className={`absolute aspect-square ${ANCHO_MESA} -translate-x-1/2 -translate-y-1/2`}
               >
                 <MesaAdmin
                   mesa={m}

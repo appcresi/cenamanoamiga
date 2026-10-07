@@ -1,5 +1,5 @@
-import { CLASE_PLANO, FondoPlano, MesaDibujo, type Silla } from "@/components/MesaDibujo";
-import { posicionDe, posicionesEnGrilla } from "@/lib/plano";
+import { ANCHO_MESA, CLASE_PLANO, FondoPlano, MesaDibujo, type Silla } from "@/components/MesaDibujo";
+import { formaDe, posicionDe, posicionesEnGrilla } from "@/lib/plano";
 import type { VistaInvitacion } from "@/lib/tipos";
 
 /**
@@ -30,9 +30,15 @@ export function PlanoInvitado({ plano }: { plano: VistaInvitacion["plano"] }) {
               aria-label={esSuya ? `Mesa ${m.numero} (tu mesa)` : `Mesa ${m.numero}`}
               // Las mesas aparecen de a una; la del invitado, al final y con rebote.
               style={{ left: `${p.x}%`, top: `${p.y}%`, animationDelay: `${esSuya ? 700 : 250 + n * 40}ms` }}
-              className={`absolute aspect-square w-[14%] -translate-x-1/2 -translate-y-1/2 animate-pop ${esSuya ? "z-10" : ""}`}
+              className={`absolute aspect-square ${ANCHO_MESA} -translate-x-1/2 -translate-y-1/2 animate-pop ${esSuya ? "z-10" : ""}`}
             >
-              <MesaDibujo numero={m.numero} nombre={m.nombre} sillas={sillas} estado={esSuya ? "destacada" : "apagada"} />
+              <MesaDibujo
+                numero={m.numero}
+                nombre={m.nombre}
+                sillas={sillas}
+                estado={esSuya ? "destacada" : "apagada"}
+                forma={formaDe(m.numero)}
+              />
             </div>
           );
         })}
